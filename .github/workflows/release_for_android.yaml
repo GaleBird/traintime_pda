@@ -104,4 +104,4 @@ jobs:
           prerelease: false
           name: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.tag_name }}
           tag_name: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.tag_name }}
-          token: ${{ secrets.RELEASE_TOKEN }}
+          token: ${{ github.token }}
