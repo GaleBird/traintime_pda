@@ -13,6 +13,8 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   PROPERTIES_PATH: "./android/key.properties"
+  KEYSTORE_PATH: "./android/app/key.jks"
+  BUILD_LOG_PATH: "build_apk.log"
 
 permissions:
   contents: write
@@ -42,33 +44,55 @@ jobs:
           .flutter/bin/flutter config --no-analytics
           .flutter/bin/flutter pub get
 
-      - name: Signing APK
+      - name: Init Build Log
+        shell: bash
         run: |
-          echo keyPassword=\${{ secrets.SIGNING_PASSWORD }} > ${{env.PROPERTIES_PATH}}
-          echo storePassword=\${{ secrets.SIGNING_PASSWORD }} >> ${{env.PROPERTIES_PATH}}
-          echo storeType=JKS >> ${{env.PROPERTIES_PATH}}
-          echo keyAlias=\${{ secrets.SIGNING_ALIAS }} >> ${{env.PROPERTIES_PATH}}
-          echo storeFile=key.jks >> ${{env.PROPERTIES_PATH}}
-          echo "${{ secrets.SIGNING_KEY }}" | base64 --decode > android/app/key.jks
+          set -euo pipefail
+          echo "=== Android release build: $(date -u +'%Y-%m-%dT%H:%M:%SZ') ===" > "${{ env.BUILD_LOG_PATH }}"
 
-      - name: Validate Signing Keystore
+      - name: Prepare Signing Keystore
+        shell: bash
         run: |
-          keytool -list \
-            -keystore android/app/key.jks \
-            -storetype JKS \
-            -storepass "${{ secrets.SIGNING_PASSWORD }}" > /dev/null
+          set -euo pipefail
+          {
+            mkdir -p "$(dirname "${{ env.KEYSTORE_PATH }}")"
+            printf '%s' "${{ secrets.SIGNING_KEY }}" | base64 --decode > "${{ env.KEYSTORE_PATH }}"
+
+            # Detect actual keystore type (JKS vs PKCS12). Hardcoding JKS can fail if the keystore is PKCS12.
+            STORE_TYPE=""
+            if keytool -list -keystore "${{ env.KEYSTORE_PATH }}" -storetype JKS -storepass "${{ secrets.SIGNING_PASSWORD }}" > /dev/null 2>&1; then
+              STORE_TYPE="JKS"
+            elif keytool -list -keystore "${{ env.KEYSTORE_PATH }}" -storetype PKCS12 -storepass "${{ secrets.SIGNING_PASSWORD }}" > /dev/null 2>&1; then
+              STORE_TYPE="PKCS12"
+            else
+              echo "::error::Keystore cannot be opened as JKS or PKCS12. Check SIGNING_KEY (base64 of the keystore file, encoded once) and SIGNING_PASSWORD."
+              exit 1
+            fi
+
+            echo "Detected keystore storeType=${STORE_TYPE}"
+
+            cat > "${{ env.PROPERTIES_PATH }}" <<EOF
+          keyPassword=${{ secrets.SIGNING_PASSWORD }}
+          storePassword=${{ secrets.SIGNING_PASSWORD }}
+          storeType=${STORE_TYPE}
+          keyAlias=${{ secrets.SIGNING_ALIAS }}
+          storeFile=key.jks
+          EOF
+          } 2>&1 | tee -a "${{ env.BUILD_LOG_PATH }}"
 
       - name: Build APK
+        shell: bash
         run: |
-          set -o pipefail
-          .flutter/bin/flutter build apk --split-per-abi --verbose 2>&1 | tee build_apk.log
+          set -euo pipefail
+          .flutter/bin/flutter build apk --split-per-abi --verbose 2>&1 | tee -a "${{ env.BUILD_LOG_PATH }}"
 
       - name: Upload Build Log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: android-release-build-log
-          path: build_apk.log
+          path: ${{ env.BUILD_LOG_PATH }}
+          if-no-files-found: ignore
 
       - name: Release
         uses: softprops/action-gh-release@v1
