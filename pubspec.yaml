@@ -1,0 +1,125 @@
+name: watermeter
+description: Course schedule assistant for GXU.
+publish_to: "none"
+version: 1.0.0+40
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  dio: ^5.0.0
+  crypto: ^3.0.6
+  pointycastle: ^4.0.0
+  encrypter_plus: ^5.1.0
+  talker_flutter: ^5.0.0
+  talker_dio_logger: ^5.0.0
+  tflite_flutter: ^0.12.1
+  synchronized: ^3.1.0+1
+  pool: ^1.5.2
+  # Stroage Cache
+  shared_preferences: ^2.5.3
+  dio_cookie_manager: ^3.0.0
+  cookie_jar: ^4.0.3
+  path: ^1.9.0
+  path_provider: ^2.0.11
+  json_annotation: ^4.9.0
+  share_plus: ^12.0.0
+  # Deal with html
+  html: ^0.15.4
+  charset_converter: ^2.2.1
+  # Homepage
+  infinite_scroll_pagination: ^5.1.1
+  sn_progress_dialog: ^1.1.3
+  fluttertoast: ^9.0.0
+  flex_color_scheme: ^8.3.0
+  # Others
+  url_launcher: ^6.1.6
+  time: ^2.1.5
+  auto_size_text: ^3.0.0
+  restart_app: ^1.2.1
+  calendar_date_picker2: ^2.0.0
+  cached_network_image: ^3.2.3
+  flutter_native_splash: ^2.3.1
+  get:
+  provider: ^6.1.5
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  package_info_plus: ^9.0.0
+  flutter_staggered_grid_view: ^0.7.0
+  styled_widget: ^0.4.1
+  file_picker: ^10.1.9
+  chinese_font_library: ^1.1.0
+  ming_cute_icons: ^0.0.7
+  remixicon: ^1.4.1
+  timelines_plus: ^1.0.4
+  based_split_view: ^1.2.0
+  permission_handler: ^12.0.1
+  # Output to system calendar
+  device_calendar: ^4.3.3
+  # Homepage Widget
+  home_widget: ^0.8.0
+  image: ^4.2.0
+  flutter_svg: ^2.2.4
+  catcher_2: ^2.0.0
+  # XDU Planet
+  #flutter_widget_from_html_core: any
+  #fwfh_cached_network_image: ^0.16.0
+  #fwfh_url_launcher: ^0.16.0
+  # PDA Club Promotion
+  #extended_image: ^10.0.1
+  # internationalized
+  device_info_plus: ^12.1.0
+  flutter_i18n: ^0.37.1
+  flutter_localizations:
+    sdk: flutter
+  intl:
+  timezone: ^0.9.4
+  flutter_local_notifications: ^18.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.3
+  build: ^4.0.4
+  build_runner: ^2.6.0
+  flutter_lints: ^6.0.0
+  glob: ^2.1.2
+  pigeon: ^26.0.1
+  yaml: ^3.1.3
+  json_serializable: ^6.10.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/gxu.png"
+  adaptive_icon_background: "#D3D6DA"
+  adaptive_icon_foreground: "assets/gxu.png"
+  remove_alpha_ios: true
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#D3D6DA"
+  image: "assets/gxu.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/gxu.png
+    - assets/gxu_name.svg
+    - assets/icon_gxu_concept.svg
+    - assets/art/aboutRobots-icon.png
+    - assets/art/Doraemon_character.png
+    - assets/art/pda_empty_cover.jpg
+    - assets/art/pda_classtable_empty.png
+    - assets/art/pda_girl_default.png
+    #    - assets/art/pda_girl_singing.png
+    - assets/art/pda_girl_reading.png
+    #    - assets/art/Fxemoji_u1F4BE_Kazami_Yuka.png
+    # - assets/art/anan_christmas.png
+    # - assets/art/Sakura_and_Tomoyo_Kimono.jpg
+    - assets/flutter_i18n/zh_CN.yaml
+    - assets/flutter_i18n/zh_TW.yaml
+    - assets/flutter_i18n/en_US.yaml
+    - assets/captcha-solver-payment.tflite
+    - assets/captcha-solver-zfw.tflite
