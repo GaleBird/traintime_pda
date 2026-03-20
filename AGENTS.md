@@ -103,7 +103,7 @@ Build examples:
 - GXU native score data comes from the transcript-preview flow, not the generic template list. The fetch order is `/yjs/py/kcpj/loadJxzlpj` -> `/yjs/py/cjgl/cjdpldy/checkdDycjd` -> `/yjs/py/cjgl/cjdpldy/getCjddyyl`, and the cache file name is `gxu_scores.json`, which settings cache-clearing must also delete.
 - App startup bootstrap should stay minimal: keep support-path / preferences / forced GXU mode / package info before `runApp`, but defer cache warmup and notification-service initialization until after the first frame so the native splash is not stretched by non-critical async work.
 - Android local size comparisons must use `release` artifacts, ideally `.flutter/bin/flutter build apk --release --split-per-abi`; `build/app/outputs/flutter-apk/app-debug.apk` is a fat debug package and can be around 242 MB because it includes `kernel_blob.bin`, all ABIs, and debug native libraries.
-- `pubspec.yaml` 的 `version` 可保持 GXU 品牌语义版本（如 `1.0.0`），但 `+build` 必须单调递增（当前基线至少 `+40`），否则同包名安装会因 versionCode/build number 回退而覆盖失败。
+- `pubspec.yaml` 的 `version` 可保持 GXU 品牌语义版本（如 `1.0.0`），但 `+build` 必须单调递增（当前基线至少 `+41`），否则同包名安装会因 versionCode/build number 回退而覆盖失败。
 - `StartupGate` still validates SMS-login sessions remotely when a phone number is cached, but `GxuCASession.isYjsxtLoggedIn()` should return `false` immediately when the local GXU cookie jar is empty instead of waiting on a network probe.
 - On this Windows machine, Android SDK should use `D:\Android\Sdk`.
 - The repository has been moved to the ASCII path `D:\c++\cliProxyApi\CLIProxyAPI_6.6.58_windows_amd64\course_schedule\traintime_pda`; use this real path directly for Flutter and Android commands.
@@ -117,6 +117,12 @@ Build examples:
 - For iterative Android UI debugging on the connected phone, prefer a persistent `flutter run` session from the real ASCII repo path so Dart-only changes can use hot reload/hot restart instead of reinstalling the APK every time.
 - `codex resume` filters sessions by `session_meta.payload.cwd`; after any repo path rename, historical session `.jsonl` files under `C:\Users\彭于晏\.codex\sessions\` may need their stored path prefix updated from the old repo path to the new one, otherwise they will only appear with `codex resume --all`.
 - 设置/关于页的 fork 信息（维护者/仓库/上游）统一维护在 `lib/repository/fork_info.dart`；改品牌或仓库地址优先改这里。
+- App 检查更新现在直接读取当前仓库的 GitHub `latest release`，实现位于 `lib/repository/pda_service_session.dart`；不要再接回旧的 `legacy.superbart.top/traintime_pda_backend` 版本接口。
+- 更新版本比较现在同时比较 `pubspec.yaml` 的语义版本和 `+build`；发布 tag 应与 `pubspec.yaml` 版本完全一致，格式优先使用 `v1.0.1+41` 这类带 build 号的 tag，否则应用内更新提示可能无法正确判断新旧版本。
+- Android 更新弹窗优先打开与设备 ABI 匹配的 GitHub Release APK 资产，若 release 中没有 APK 资产才回退到 release 页面；维护下载来源时不要恢复 F-Droid 旧链接逻辑。
+- GitHub Android 发版工作流现在由 tag push 自动触发，配置文件是 `.github/workflows/release_for_android.yaml`，触发规则为 `v*`；常规发版流程应是：先更新 `pubspec.yaml` 版本、提交并推送 `main`，再创建并推送同版本 tag，让 GitHub Actions 构建并上传 split-per-ABI APK 到 Release。
+- Android 发版工作流已切到 `actions/checkout@v4` / `actions/setup-java@v4`，并显式启用 Node 24；若 GitHub Actions 再次在 `Build APK` 失败，优先下载失败时自动上传的 artifact `android-release-build-log` 看完整构建日志，不要只看 annotations 里的摘要。
+- 这台机器当前没有 `gh` 命令；若用户要“上传 APK 到 GitHub”，优先走“push tag 触发 GitHub Actions release”而不是依赖本地 GitHub CLI 直传。
 - `tool/generators/generate_gxu_launcher_icon.py` 现在用于把任意源图标准化为实际打包使用的 `assets/gxu.png`；需要替换品牌图时，优先运行该脚本并通过 `--source` 指向新图片，再执行 `flutter_launcher_icons` / `flutter_native_splash`。
 - 设计上下文已写入仓库根目录 `.impeccable.md`，后续界面/品牌类改动遵循“校园自然系：西大绿 + 米白 + 金色点缀”。
 - `PigPage` 仍是首页底部导航的正式入口；不要再移除“猪图鉴赏”，除非用户明确要求。

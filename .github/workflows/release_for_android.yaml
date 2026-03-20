@@ -11,16 +11,23 @@ on:
       - "v*"
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   PROPERTIES_PATH: "./android/key.properties"
+
+permissions:
+  contents: write
 
 jobs:
   build_apk:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
@@ -28,7 +35,7 @@ jobs:
       - name: Install Flutter
         run: |
           java -version
-          git submodule update --init --recursive
+          chmod +x .flutter/bin/flutter
 
       - name: Prepare Flutter Dependencies
         run: |
@@ -45,7 +52,15 @@ jobs:
 
       - name: Build APK
         run: |
-          .flutter/bin/flutter build apk --split-per-abi
+          set -o pipefail
+          .flutter/bin/flutter build apk --split-per-abi --verbose 2>&1 | tee build_apk.log
+
+      - name: Upload Build Log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-build-log
+          path: build_apk.log
 
       - name: Release
         uses: softprops/action-gh-release@v1
