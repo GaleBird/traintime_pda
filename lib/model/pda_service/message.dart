@@ -2,19 +2,8 @@
 // Copyright 2025 Traintime PDA authors.
 // SPDX-License-Identifier: MPL-2.0
 
-import 'package:json_annotation/json_annotation.dart';
-
-part 'message.g.dart';
-
-@JsonSerializable(explicitToJson: true)
 class UpdateMessage {
-  final String code;
-  final List<String> update;
-  final String ioslink;
-  final String github;
-  final String fdroid;
-
-  UpdateMessage({
+  const UpdateMessage({
     required this.code,
     required this.update,
     required this.ioslink,
@@ -22,8 +11,9 @@ class UpdateMessage {
     required this.fdroid,
   });
 
-  factory UpdateMessage.fromJson(Map<String, dynamic> json) =>
-      _$UpdateMessageFromJson(json);
-
-  Map<String, dynamic> toJson() => _$UpdateMessageToJson(this);
+  final String code;
+  final List<String> update;
+  final String ioslink;
+  final String github;
+  final String fdroid;
 }

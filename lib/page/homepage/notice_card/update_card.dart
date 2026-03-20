@@ -15,40 +15,39 @@ class UpdateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (updateState.value == true) {
+      if (updateState.value) {
         return Text(FlutterI18n.translate(context, "setting.fetching_update"))
             .paddingDirectional(horizontal: 16, vertical: 14)
             .withHomeCardStyle(context);
-      } else if (updateError.value != null) {
+      }
+      if (updateResult.value == UpdateCheckResult.failed ||
+          updateError.value != null) {
         return Text(FlutterI18n.translate(context, "setting.fetch_failed"))
             .paddingDirectional(horizontal: 16, vertical: 14)
             .withHomeCardStyle(context);
-      } else {
-        switch (isNewVersionAvaliable(updateMessage.value!)) {
-          case null:
-            return Text(
-                  FlutterI18n.translate(context, "setting.current_testing"),
-                )
-                .paddingDirectional(horizontal: 16, vertical: 14)
-                .withHomeCardStyle(context);
-          case true:
-            return Text(FlutterI18n.translate(context, "setting.new_version"))
-                .paddingDirectional(horizontal: 16, vertical: 14)
-                .withHomeCardStyle(
-                  context,
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => Obx(
-                        () => UpdateDialog(updateMessage: updateMessage.value!),
-                      ),
-                    );
-                  },
-                );
-          case false:
-            return SizedBox(height: 0);
-        }
       }
+      if (updateResult.value == UpdateCheckResult.localAhead) {
+        return Text(FlutterI18n.translate(context, "setting.current_testing"))
+            .paddingDirectional(horizontal: 16, vertical: 14)
+            .withHomeCardStyle(context);
+      }
+      if (updateResult.value == UpdateCheckResult.available &&
+          updateMessage.value != null) {
+        return Text(FlutterI18n.translate(context, "setting.new_version"))
+            .paddingDirectional(horizontal: 16, vertical: 14)
+            .withHomeCardStyle(
+              context,
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => Obx(
+                    () => UpdateDialog(updateMessage: updateMessage.value!),
+                  ),
+                );
+              },
+            );
+      }
+      return const SizedBox.shrink();
     });
   }
 }

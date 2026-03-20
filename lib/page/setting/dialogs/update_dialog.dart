@@ -15,54 +15,68 @@ class UpdateDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String text = FlutterI18n.translate(
-      context,
-      "setting.update_dialog.new_content",
-      translationParams: {"code": updateMessage.code},
+    final buffer = StringBuffer(
+      FlutterI18n.translate(
+        context,
+        "setting.update_dialog.new_content",
+        translationParams: {"code": updateMessage.code},
+      ),
     );
     for (int i = 0; i < updateMessage.update.length; ++i) {
-      text += "${i + 1}.${updateMessage.update[i]}\n";
+      buffer.writeln("${i + 1}.${updateMessage.update[i]}");
     }
     return AlertDialog(
       title: Text(
         FlutterI18n.translate(context, "setting.update_dialog.new_version"),
       ),
-      content: Text(text),
-      actions: [
+      content: Text(buffer.toString().trimRight()),
+      actions: _buildActions(context),
+    );
+  }
+
+  List<Widget> _buildActions(BuildContext context) {
+    final actions = <Widget>[
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(
+          FlutterI18n.translate(context, "setting.update_dialog.not_now"),
+        ),
+      ),
+    ];
+    if (Platform.isIOS && updateMessage.ioslink != updateMessage.github) {
+      actions.add(
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => launchUrlString(updateMessage.ioslink),
           child: Text(
-            FlutterI18n.translate(context, "setting.update_dialog.not_now"),
+            FlutterI18n.translate(context, "setting.update_dialog.app_store"),
           ),
         ),
-        if (Platform.isIOS)
-          TextButton(
-            onPressed: () => launchUrlString(updateMessage.ioslink),
-            child: Text(
-              FlutterI18n.translate(context, "setting.update_dialog.app_store"),
-            ),
-          )
-        else if (Platform.isAndroid)
-          TextButton(
-            onPressed: () => launchUrlString(updateMessage.fdroid),
-            child: Text(
-              FlutterI18n.translate(
-                context,
-                "setting.update_dialog.download_apk",
-              ),
-            ),
-          )
-        else
-          TextButton(
-            onPressed: () => launchUrlString(updateMessage.github),
-            child: Text(
-              FlutterI18n.translate(
-                context,
-                "setting.update_dialog.github_release",
-              ),
+      );
+    }
+    if (Platform.isAndroid && updateMessage.fdroid != updateMessage.github) {
+      actions.add(
+        TextButton(
+          onPressed: () => launchUrlString(updateMessage.fdroid),
+          child: Text(
+            FlutterI18n.translate(
+              context,
+              "setting.update_dialog.download_apk",
             ),
           ),
-      ],
+        ),
+      );
+    }
+    actions.add(
+      TextButton(
+        onPressed: () => launchUrlString(updateMessage.github),
+        child: Text(
+          FlutterI18n.translate(
+            context,
+            "setting.update_dialog.github_release",
+          ),
+        ),
+      ),
     );
+    return actions;
   }
 }

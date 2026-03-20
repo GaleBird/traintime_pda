@@ -707,6 +707,7 @@ setting:
     current_stable: "目前您正在运行最新版"
     current_testing: "目前您正在运行测试版"
     fetch_failed: "获取更新信息失败"
+    no_published_release: "当前仓库还没有发布正式版本"
     # 界面设置
     ui_setting: "界面设置"
     brightness_setting: "设置深浅色"

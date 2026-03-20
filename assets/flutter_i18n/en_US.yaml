@@ -723,6 +723,7 @@ setting:
    current_stable: "You are running the latest version"
    current_testing: "You are running the testing version"
    fetch_failed: "Failed to fetch update information"
+   no_published_release: "No stable release has been published yet"
    # 界面设置
    ui_setting: "UI Settings"
    brightness_setting: "Light/Dark mode"

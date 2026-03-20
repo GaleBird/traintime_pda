@@ -675,6 +675,7 @@ setting:
   current_stable: 目前您正在運行最新版
   current_testing: 目前您正在運行測試版
   fetch_failed: 獲取更新信息失敗
+  no_published_release: 目前倉庫尚未發佈正式版本
   ui_setting: 界面設置
   brightness_setting: 設置深淺色
   color_setting: 顏色設置

@@ -83,6 +83,25 @@ class _SettingWindowState extends State<SettingWindow> {
     }
   }
 
+  Future<void> _showUpdateDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) =>
+          Obx(() => UpdateDialog(updateMessage: updateMessage.value!)),
+    );
+  }
+
+  void _showUpdateResult(BuildContext context, UpdateCheckResult result) {
+    final key = switch (result) {
+      UpdateCheckResult.latest => "setting.current_stable",
+      UpdateCheckResult.localAhead => "setting.current_testing",
+      UpdateCheckResult.noRelease => "setting.no_published_release",
+      UpdateCheckResult.failed => "setting.fetch_failed",
+      UpdateCheckResult.available => "setting.current_stable",
+    };
+    showToast(context: context, msg: FlutterI18n.translate(context, key));
+  }
+
   @override
   Widget build(BuildContext context) {
     List<String> demoBlueModeName = [
@@ -180,25 +199,11 @@ class _SettingWindowState extends State<SettingWindow> {
                     checkUpdate().then(
                       (value) async {
                         if (context.mounted) {
-                          if ((value ?? false) && updateMessage.value != null) {
-                            await showDialog(
-                              context: context,
-                              builder: (context) => Obx(
-                                () => UpdateDialog(
-                                  updateMessage: updateMessage.value!,
-                                ),
-                              ),
-                            );
+                          if (value == UpdateCheckResult.available &&
+                              updateMessage.value != null) {
+                            await _showUpdateDialog(context);
                           } else {
-                            showToast(
-                              context: context,
-                              msg: FlutterI18n.translate(
-                                context,
-                                value == null
-                                    ? "setting.current_testing"
-                                    : "setting.current_stable",
-                              ),
-                            );
+                            _showUpdateResult(context, value);
                           }
                         }
                       },
