@@ -117,10 +117,11 @@ Build examples:
 - For iterative Android UI debugging on the connected phone, prefer a persistent `flutter run` session from the real ASCII repo path so Dart-only changes can use hot reload/hot restart instead of reinstalling the APK every time.
 - `codex resume` filters sessions by `session_meta.payload.cwd`; after any repo path rename, historical session `.jsonl` files under `C:\Users\彭于晏\.codex\sessions\` may need their stored path prefix updated from the old repo path to the new one, otherwise they will only appear with `codex resume --all`.
 - 设置/关于页的 fork 信息（维护者/仓库/上游）统一维护在 `lib/repository/fork_info.dart`；改品牌或仓库地址优先改这里。
-- App 检查更新现在直接读取当前仓库的 GitHub `latest release`，实现位于 `lib/repository/pda_service_session.dart`；不要再接回旧的 `legacy.superbart.top/traintime_pda_backend` 版本接口。
+- App 检查更新现在读取 DigitalOcean Spaces 清单 `https://myapk.sgp1.cdn.digitaloceanspaces.com/manifests/update.json`，实现位于 `lib/repository/pda_service_session.dart`；不要再接回旧的 `legacy.superbart.top/traintime_pda_backend` 或 GitHub `latest release` 直读接口。
 - 更新版本比较现在同时比较 `pubspec.yaml` 的语义版本和 `+build`；发布 tag 应与 `pubspec.yaml` 版本完全一致，格式优先使用 `v1.0.1+41` 这类带 build 号的 tag，否则应用内更新提示可能无法正确判断新旧版本。
-- Android 更新弹窗优先打开与设备 ABI 匹配的 GitHub Release APK 资产，若 release 中没有 APK 资产才回退到 release 页面；维护下载来源时不要恢复 F-Droid 旧链接逻辑。
+- Android 更新弹窗优先打开与设备 ABI 匹配的 Spaces APK 直链，`UpdateMessage.fdroid` 继续承载 Android 下载地址，GitHub Release 按钮仅作为备用下载入口；维护下载来源时不要恢复 F-Droid 旧链接逻辑。
 - GitHub Android 发版工作流现在由 tag push 自动触发，配置文件是 `.github/workflows/release_for_android.yaml`，触发规则为 `v*`；常规发版流程应是：先更新 `pubspec.yaml` 版本、提交并推送 `main`，再创建并推送同版本 tag，让 GitHub Actions 构建并上传 split-per-ABI APK 到 Release。
+- Android 发版工作流现在还会把 split-per-ABI APK 上传到 DigitalOcean Spaces `myapk`，并覆盖 `manifests/update.json`；运行前必须在 GitHub Secrets 配置 `DO_SPACES_KEY`、`DO_SPACES_SECRET`、`DO_SPACES_BUCKET`、`DO_SPACES_REGION`、`DO_SPACES_CDN_BASE_URL`。
 - Android 发版工作流已切到 `actions/checkout@v4` / `actions/setup-java@v4`，并显式启用 Node 24；若 GitHub Actions 再次在 `Build APK` 失败，优先下载失败时自动上传的 artifact `android-release-build-log` 看完整构建日志，不要只看 annotations 里的摘要。
 - 当前 Android Release CI 的真实坑点不是 Node 警告，而是 release 签名：若日志出现 `KeytoolException` / `Tag number over 30 is not supported`，多数是 keystore 类型或内容不匹配导致解析失败。工作流会在 `JKS` / `PKCS12` 间自动探测 `storeType` 并写入 `android/key.properties`；若两种类型都无法通过 `keytool -list` 校验，则优先检查 `SIGNING_KEY` 是否为 keystore 文件二进制的 base64（只能编码一次），以及 `SIGNING_PASSWORD` / `SIGNING_ALIAS` 是否正确。
 - Android 发版工作流会在签名步骤前创建并持续追加 `build_apk.log`；失败时 artifact 上传不会再出现 “No files were found with the provided path: build_apk.log” 的噪音警告。注意 GitHub 上的 “Re-run jobs” 会复用旧 commit 的 workflow 文件，不会应用后来提交的工作流修复；需要重新推 tag 或用 `workflow_dispatch` 对最新 commit 触发一次新运行。

@@ -894,7 +894,7 @@ setting:
         not_now: "暂不更新"
         app_store: "App Store 更新"
         download_apk: "下载安装包"
-        github_release: "去 Git Release"
+        github_release: "GitHub 备用下载"
         new_content: "版本号 {code} 新增内容：\n"
     localization_dialog:
         title: "修改语言"

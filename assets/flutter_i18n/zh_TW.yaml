@@ -861,12 +861,12 @@ setting:
     blank_input: 輸入空白!
   change_schoolnet_password_title: 修改校園網查詢帳號密碼
   update_dialog:
-    new_version: 新版本發佈
-    not_now: 暫不更新
-    app_store: App Store 更新
-    download_apk: 下載安裝包
-    github_release: 去 Git Release
-    new_content: '版本號 {code} 新增內容：
+      new_version: 新版本發佈
+      not_now: 暫不更新
+      app_store: App Store 更新
+      download_apk: 下載安裝包
+      github_release: GitHub 備用下載
+      new_content: '版本號 {code} 新增內容：
 
       '
   localization_dialog:

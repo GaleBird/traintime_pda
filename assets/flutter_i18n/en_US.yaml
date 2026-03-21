@@ -905,7 +905,7 @@ setting:
       not_now: "Not now"
       app_store: "Update from App Store"
       download_apk: "Download APK"
-      github_release: "Go to Git Release"
+      github_release: "GitHub Backup"
       new_content: "New features from version {code}:\n"
    localization_dialog:
       title: "Languages"

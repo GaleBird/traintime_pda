@@ -16,12 +16,6 @@ import 'package:watermeter/repository/preference.dart' as pref;
 
 enum UpdateCheckResult { available, latest, localAhead, noRelease, failed }
 
-const Map<String, String> _githubHeaders = {
-  'Accept': 'application/vnd.github+json',
-  'User-Agent': 'GXU-Traintime-PDA',
-  'X-GitHub-Api-Version': '2022-11-28',
-};
-
 Rxn<UpdateMessage> updateMessage = Rxn<UpdateMessage>(null);
 Rxn<UpdateCheckResult> updateResult = Rxn<UpdateCheckResult>(null);
 RxBool updateState = false.obs;
@@ -34,10 +28,7 @@ Future<UpdateCheckResult> checkUpdate() {
   return updateLock.synchronized(() async {
     _startUpdateCheck();
     try {
-      final response = await dio.get(
-        ForkInfo.latestReleaseApiUrl,
-        options: Options(headers: _githubHeaders),
-      );
+      final response = await dio.get(ForkInfo.updateManifestUrl);
       final message = await _buildUpdateMessage(response.data);
       updateMessage.value = message;
       updateError.value = null;
@@ -97,7 +88,7 @@ Map<String, dynamic> _asJsonMap(dynamic rawData) {
   if (rawData is Map) {
     return rawData.map((key, value) => MapEntry(key.toString(), value));
   }
-  throw const FormatException('Unexpected GitHub release payload.');
+  throw const FormatException('Unexpected update manifest payload.');
 }
 
 String _readString(
