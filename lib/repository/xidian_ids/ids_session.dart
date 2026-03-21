@@ -124,7 +124,7 @@ class IDSSession extends NetworkSession {
       );
       log.info(
         "[IDSSession][checkAndLogin] "
-        "Received: $data.",
+        "Received status: ${data.statusCode}.",
       );
       if (data.statusCode == 401) {
         throw PasswordWrongException(msg: _parsePasswordWrongMsg(data.data));
@@ -137,7 +137,7 @@ class IDSSession extends NetworkSession {
           ..removeWhere((element) => element.id != "continue");
         log.info(
           "[IDSSession][login] "
-          "form: $form.",
+          "continue-form count: ${form.length}.",
         );
         if (form.isNotEmpty) {
           var inputSearch = form[0].getElementsByTagName("input");
@@ -206,7 +206,7 @@ class IDSSession extends NetworkSession {
     }
     log.info(
       "[IDSSession][login] "
-      "cookie: $cookieStr.",
+      "cookie loaded (length: ${cookieStr.length}).",
     );
 
     /// Get AES encrypt key. There must be.
@@ -218,7 +218,7 @@ class IDSSession extends NetworkSession {
         .attributes["value"]!;
     log.info(
       "[IDSSession][login] "
-      "encrypt key: $keys.",
+      "encrypt key received (length: ${keys.length}).",
     );
 
     /// Prepare for login.
@@ -288,7 +288,7 @@ class IDSSession extends NetworkSession {
           ..removeWhere((element) => element.id != "continue");
         log.info(
           "[IDSSession][login] "
-          "form: $form.",
+          "continue-form count: ${form.length}.",
         );
         if (form.isNotEmpty) {
           var inputSearch = form[0].getElementsByTagName("input");
@@ -336,7 +336,7 @@ class IDSSession extends NetworkSession {
     var response = await dio.get(location);
     while (response.headers[HttpHeaders.locationHeader] != null) {
       location = response.headers[HttpHeaders.locationHeader]![0];
-      log.info("[checkWhetherPostgraduate] Received location: $location");
+      log.info("[checkWhetherPostgraduate] Received redirect.");
       response = await dio.get(location);
     }
 

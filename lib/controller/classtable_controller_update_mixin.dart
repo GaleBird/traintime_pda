@@ -23,14 +23,16 @@ extension ClassTableControllerUpdate on ClassTableController {
   }
 
   void _loadCachedClassTable() {
-    classTableData = ClassTableData.fromJson(
-      jsonDecode(classTableFile.readAsStringSync()),
-    );
+    final raw = _classTableStore.readAsStringSync();
+    if (raw == null) {
+      throw const FormatException("课表缓存不存在。");
+    }
+    classTableData = ClassTableData.fromJson(jsonDecode(raw));
     _attachUserDefined(classTableData);
   }
 
   Future<void> _saveRemoteClassTable(ClassTableData data) async {
-    classTableFile.writeAsStringSync(jsonEncode(data.toJson()));
+    _classTableStore.writeAsStringSync(jsonEncode(data.toJson()));
     await preference.setString(
       preference.Preference.classTableCacheMode,
       _currentCacheMode,

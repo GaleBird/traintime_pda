@@ -183,24 +183,26 @@ class ExperimentSession extends NetworkSession {
       "Start fetching data.",
     );
 
-    for (String i in loginResponse.headers[HttpHeaders.setCookieHeader] ?? []) {
-      log.debug(
-        "[experiment_session][getData] "
-        "Cookie $i.",
-      );
-      if (i.contains("PhyEws_StuName")) {
+    final setCookieHeaders =
+        loginResponse.headers[HttpHeaders.setCookieHeader] ?? const <String>[];
+    log.debug(
+      "[experiment_session][getData] "
+      "Received ${setCookieHeaders.length} Set-Cookie headers.",
+    );
+    for (final header in setCookieHeaders) {
+      if (header.contains("PhyEws_StuName")) {
         /// This guy find out the secret.
         cookieStr += "PhyEws_StuName=waterfloatinggenderly; ";
-      } else if (i.contains('HttpOnly')) {
+      } else if (header.contains('HttpOnly')) {
         continue;
       } else {
-        cookieStr += '${i.split(';')[0]}; ';
+        cookieStr += '${header.split(';')[0]}; ';
       }
     }
 
     log.debug(
       "[experiment_session][getData] "
-      "Cookie is $cookieStr.",
+      "Cookie prepared.",
     );
 
     var data = await dio

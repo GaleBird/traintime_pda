@@ -15,6 +15,7 @@ import 'package:watermeter/repository/gxu_ids/gxu_classtable_session.dart';
 import 'package:watermeter/repository/classtable_storage.dart';
 import 'package:watermeter/repository/network_session.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
+import 'package:watermeter/repository/security/secure_file_store.dart';
 import 'package:watermeter/model/xidian_ids/classtable.dart';
 
 part 'classtable_controller_update_mixin.dart';
@@ -34,6 +35,14 @@ class ClassTableController extends GetxController {
   late File userDefinedFile;
   late ClassTableData classTableData;
   late UserDefinedClassData userDefinedClassData;
+
+  SecureFileStore get _classTableStore =>
+      SecureFileStore(file: classTableFile, namespace: "classtable_remote");
+
+  SecureFileStore get _userDefinedClassStore => SecureFileStore(
+    file: userDefinedFile,
+    namespace: "classtable_user_defined",
+  );
 
   // Get ClassDetail name info
   ClassDetail getClassDetail(TimeArrangement timeArrangementIndex) =>

@@ -17,6 +17,12 @@ tool/tmp_yaml_check.dart
 tool/tmp_yaml_check_all.dart
 .codex_tmp/
 
+# Android signing (local/CI generated)
+android/key.properties
+android/app/key.jks
+android/app/*.jks
+android/app/*.keystore
+
 # IntelliJ related
 *.iml
 *.ipr

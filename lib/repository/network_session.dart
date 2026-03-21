@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:watermeter/repository/logger.dart';
+import 'package:watermeter/repository/security/secure_cookie_storage.dart';
 
 late Directory supportPath;
 
@@ -19,7 +20,10 @@ class NetworkSession {
   //@protected
   final PersistCookieJar cookieJar = PersistCookieJar(
     persistSession: true,
-    storage: FileStorage("${supportPath.path}/cookie/general"),
+    storage: SecureCookieStorage(
+      namespace: "general",
+      legacyDir: "${supportPath.path}/cookie/general",
+    ),
   );
 
   Future<void> clearCookieJar() => cookieJar.deleteAll();

@@ -24,6 +24,7 @@ import 'package:watermeter/page/setting/dialogs/semester_switch_dialog.dart';
 import 'package:watermeter/page/setting/dialogs/update_dialog.dart';
 import 'package:watermeter/page/setting/notification_page/notification_debug_page.dart';
 import 'package:watermeter/page/setting/notification_page/notification_page.dart';
+import 'package:watermeter/page/setting/setting_window/cache_ops.dart';
 import 'package:watermeter/repository/localization.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/page/public_widget/toast.dart';
@@ -889,7 +890,7 @@ class _SettingWindowState extends State<SettingWindow> {
                               ),
                             );
                             try {
-                              await NetworkSession().clearCookieJar();
+                              await clearAllCookies();
                             } on PathNotFoundException {
                               log.debug(
                                 "[setting][ClearAllCache]"
@@ -964,7 +965,7 @@ class _SettingWindowState extends State<SettingWindow> {
 
                             /// Clean Cookie
                             try {
-                              await NetworkSession().clearCookieJar();
+                              await clearAllCookies();
                               // I don't care.
                               // ignore: empty_catches
                             } on Exception {}
@@ -1013,6 +1014,7 @@ void _removeCache() {
     ScoreSession.scoreListCacheName,
     GxuScoreSession.scoreListCacheName,
     GxuCourseSelectionSession.courseSelectionCacheName,
+    gxuNetworkCacheName,
     electricity_session.ElectricitySession.electricityCache,
     electricity_session.ElectricitySession.electricityHistory,
   ]) {
@@ -1034,6 +1036,7 @@ void _removeAll() {
     ScoreSession.scoreListCacheName,
     GxuScoreSession.scoreListCacheName,
     GxuCourseSelectionSession.courseSelectionCacheName,
+    gxuNetworkCacheName,
     electricity_session.ElectricitySession.electricityCache,
     electricity_session.ElectricitySession.electricityHistory,
   ]) {

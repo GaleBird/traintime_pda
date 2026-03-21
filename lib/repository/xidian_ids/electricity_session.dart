@@ -540,7 +540,7 @@ xh5zeF9usFgtdabgACU/cQIDAQAB
       preference.Preference.electricityPassword,
     );
     if (password.isEmpty) {
-      password = "123456";
+      throw NeedInfoException();
     }
 
     String location = await checkAndLogin(
@@ -553,17 +553,21 @@ xh5zeF9usFgtdabgACU/cQIDAQAB
       location = response.headers[HttpHeaders.locationHeader]![0];
       log.info(
         "[PaymentSession][getOwe] "
-        "Received location: $location.",
+        "Received redirect.",
       );
       response = await dio.get(location);
     }
     var nextStop = getTransfer.firstMatch(response.data);
+    final transferUrl = nextStop?.group(0);
+    if (transferUrl == null || transferUrl.isEmpty) {
+      throw NotFoundException();
+    }
     log.info(
       "[PaymentSession][getOwe] "
-      "getTransfer: ${nextStop![0]!}.",
+      "getTransfer matched.",
     );
 
-    await dio.get(nextStop[0]!.replaceAll('"', ""));
+    await dio.get(transferUrl.replaceAll('"', ""));
 
     await dio.get("https://payment.xidian.edu.cn/NetWorkUI/showPublic");
 
@@ -594,7 +598,7 @@ xh5zeF9usFgtdabgACU/cQIDAQAB
         continue;
       }
 
-      log.info("[PaymentSession][getOwe] checkcode is $checkCode");
+      log.info("[PaymentSession][getOwe] Captcha resolved.");
 
       var value = await dio.post(
         "https://payment.xidian.edu.cn/NetWorkUI/checkUserInfo",

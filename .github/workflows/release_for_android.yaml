@@ -16,6 +16,7 @@ env:
   KEYSTORE_PATH: "./android/app/key.jks"
   BUILD_LOG_PATH: "build_apk.log"
   UPDATE_MANIFEST_PATH: "manifests/update.json"
+  UPDATE_MANIFEST_SIGNING_KEY_PATH: "./tmp/update_manifest_private.pem"
 
 permissions:
   contents: write
@@ -133,6 +134,7 @@ jobs:
           DO_SPACES_CDN_BASE_URL: ${{ secrets.DO_SPACES_CDN_BASE_URL }}
           DO_SPACES_KEY: ${{ secrets.DO_SPACES_KEY }}
           DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
+          UPDATE_MANIFEST_SIGNING_KEY: ${{ secrets.UPDATE_MANIFEST_SIGNING_KEY }}
         run: |
           set -euo pipefail
           for key in \
@@ -140,12 +142,30 @@ jobs:
             DO_SPACES_REGION \
             DO_SPACES_CDN_BASE_URL \
             DO_SPACES_KEY \
-            DO_SPACES_SECRET; do
+            DO_SPACES_SECRET \
+            UPDATE_MANIFEST_SIGNING_KEY; do
             if [ -z "${!key}" ]; then
               echo "::error::Missing required GitHub secret: ${key}"
               exit 1
             fi
           done
+
+      - name: Install Release Python Tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user awscli cryptography
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Prepare Update Manifest Signing Key
+        shell: bash
+        env:
+          UPDATE_MANIFEST_SIGNING_KEY: ${{ secrets.UPDATE_MANIFEST_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "${{ env.UPDATE_MANIFEST_SIGNING_KEY_PATH }}")"
+          printf '%s' "${UPDATE_MANIFEST_SIGNING_KEY}" > "${{ env.UPDATE_MANIFEST_SIGNING_KEY_PATH }}"
+          chmod 600 "${{ env.UPDATE_MANIFEST_SIGNING_KEY_PATH }}"
 
       - name: Generate Update Manifest
         shell: bash
@@ -161,16 +181,11 @@ jobs:
             --cdn-base-url "${DO_SPACES_CDN_BASE_URL}" \
             --body-file release_body.txt \
             --output update.json \
+            --signing-key "${{ env.UPDATE_MANIFEST_SIGNING_KEY_PATH }}" \
+            --key-id "update-manifest-rsa-sha256-v1" \
             --asset-path build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
             --asset-path build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
             --asset-path build/app/outputs/flutter-apk/app-x86_64-release.apk
-
-      - name: Install AWS CLI
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m pip install --user awscli
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Upload APK and Manifest to Spaces
         shell: bash

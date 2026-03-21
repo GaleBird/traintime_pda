@@ -14,6 +14,7 @@ import 'package:watermeter/repository/gxu_ids/gxu_network_parser.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart';
 import 'package:watermeter/repository/preference.dart' as prefs;
+import 'package:watermeter/repository/security/secure_cookie_storage.dart';
 
 const _maxCaptchaAttempts = 3;
 
@@ -49,7 +50,10 @@ class GxuNetworkSession {
   final _parser = GxuNetworkParser();
   final PersistCookieJar _cookieJar = PersistCookieJar(
     persistSession: true,
-    storage: FileStorage("${supportPath.path}/cookie/gxu_network"),
+    storage: SecureCookieStorage(
+      namespace: "gxu_network",
+      legacyDir: "${supportPath.path}/cookie/gxu_network",
+    ),
   );
 
   late final Dio _dio =

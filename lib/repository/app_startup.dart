@@ -13,10 +13,12 @@ import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart' as repo_general;
 import 'package:watermeter/repository/notification/notification_registrar.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
+import 'package:watermeter/repository/security/secure_file_store.dart';
 
 Future<void> initializeAppBootstrap() async {
   repo_general.supportPath = await getApplicationSupportDirectory();
   await _initializePreferences();
+  await initializeSecureFileStore();
   await _ensureGxuMode();
   preference.packageInfo = await PackageInfo.fromPlatform();
 }
@@ -34,6 +36,7 @@ Future<void> _initializePreferences() async {
   preference.prefs = await SharedPreferencesWithCache.create(
     cacheOptions: const SharedPreferencesWithCacheOptions(),
   );
+  await preference.initializeSecurePreferences();
 }
 
 Future<void> _ensureGxuMode() async {

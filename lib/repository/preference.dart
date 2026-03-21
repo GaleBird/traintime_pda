@@ -7,14 +7,28 @@
 import 'dart:io';
 
 import 'package:catcher_2/catcher_2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart' as repo_general;
+import 'package:watermeter/repository/security/app_secure_storage.dart';
+import 'package:watermeter/repository/security/secure_file_store.dart';
 
 late SharedPreferencesWithCache prefs;
 late PackageInfo packageInfo;
+
+const Set<Preference> _secureStringKeys = {
+  Preference.idsPassword,
+  Preference.schoolNetQueryPassword,
+  Preference.sportPassword,
+  Preference.experimentPassword,
+  Preference.electricityPassword,
+};
+
+final Map<Preference, String> _secureStringCache = <Preference, String>{};
+bool _securePreferencesInitialized = false;
 
 final GlobalKey<NavigatorState> debuggerKey = GlobalKey<NavigatorState>(
   debugLabel: "PDADebuggerKey",
@@ -26,7 +40,7 @@ final GlobalKey leftKey = GlobalKey();
 const String appId = "group.xyz.superbart.xdyou";
 
 Catcher2Options catcherOptions = Catcher2Options(
-  PageReportMode(showStackTrace: true),
+  PageReportMode(showStackTrace: kDebugMode),
   [
     EmailManualHandler(
       ["2484895358@qq.com"],
@@ -38,7 +52,7 @@ Catcher2Options catcherOptions = Catcher2Options(
       fileSupplier: (_) => _buildCatcherLogFile(),
       handleWhenRejected: true,
     ),
-    ConsoleHandler(),
+    if (kDebugMode) ConsoleHandler(),
   ],
   localizationOptions: [LocalizationOptions.buildDefaultChineseOptions()],
   logger: PDACatcher2Logger(),
@@ -120,9 +134,35 @@ enum Preference {
   final String type;
 }
 
+Future<void> initializeSecurePreferences() async {
+  if (_securePreferencesInitialized) {
+    return;
+  }
+  for (final key in _secureStringKeys) {
+    final stored = await appSecureStorage.read(key: key.key) ?? "";
+    if (stored.isNotEmpty) {
+      _secureStringCache[key] = stored;
+      await prefs.remove(key.key);
+      continue;
+    }
+    final legacy = prefs.getString(key.key) ?? "";
+    if (legacy.isEmpty) {
+      continue;
+    }
+    await appSecureStorage.write(key: key.key, value: legacy);
+    _secureStringCache[key] = legacy;
+    await prefs.remove(key.key);
+  }
+  await prefs.reloadCache();
+  _securePreferencesInitialized = true;
+}
+
 String getString(Preference key) {
   if (key.type != 'String') {
     throw WrongTypeException;
+  }
+  if (_secureStringKeys.contains(key)) {
+    return _secureStringCache[key] ?? "";
   }
   return prefs.getString(key.key) ?? "";
 }
@@ -146,6 +186,13 @@ Future<void> setString(Preference key, String value) async {
   if (key.type != 'String') {
     throw WrongTypeException;
   }
+  if (_secureStringKeys.contains(key)) {
+    await appSecureStorage.write(key: key.key, value: value);
+    _secureStringCache[key] = value;
+    await prefs.remove(key.key);
+    await prefs.reloadCache();
+    return;
+  }
   await prefs.setString(key.key, value);
   await prefs.reloadCache();
 }
@@ -167,11 +214,18 @@ Future<void> setInt(Preference key, int value) async {
 }
 
 Future<void> remove(Preference key) async {
+  if (_secureStringKeys.contains(key)) {
+    await appSecureStorage.delete(key: key.key);
+    _secureStringCache.remove(key);
+  }
   await prefs.remove(key.key);
   await prefs.reloadCache();
 }
 
 Future<void> prefrenceClear() async {
+  await appSecureStorage.deleteAll();
+  resetSecureFileStore();
+  _secureStringCache.clear();
   await prefs.clear();
   await prefs.reloadCache();
 }

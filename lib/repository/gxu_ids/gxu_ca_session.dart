@@ -8,6 +8,7 @@ import 'package:synchronized/synchronized.dart';
 import 'package:watermeter/repository/auth_exceptions.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart';
+import 'package:watermeter/repository/security/secure_cookie_storage.dart';
 
 class GxuCASession {
   static const caBase = "https://ca.gxu.edu.cn:8443/zfca";
@@ -18,7 +19,10 @@ class GxuCASession {
 
   final PersistCookieJar cookieJar = PersistCookieJar(
     persistSession: true,
-    storage: FileStorage("${supportPath.path}/cookie/gxu"),
+    storage: SecureCookieStorage(
+      namespace: "gxu",
+      legacyDir: "${supportPath.path}/cookie/gxu",
+    ),
   );
 
   late final Dio dio =

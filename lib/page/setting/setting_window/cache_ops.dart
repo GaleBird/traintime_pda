@@ -7,9 +7,11 @@ import 'dart:io';
 import 'package:watermeter/repository/classtable_storage.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_ca_session.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_course_selection_session.dart';
+import 'package:watermeter/repository/gxu_ids/gxu_network_session.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_score_session.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart';
+import 'package:watermeter/repository/xidian_sport_session.dart';
 
 const String gxuNetworkCacheName = 'GxuNetworkUsage.json';
 
@@ -23,6 +25,16 @@ Future<void> clearAllCookies() async {
     await GxuCASession().clearCookieJar();
   } catch (e, s) {
     log.warning('[setting][clearCookies] gxu failed', e, s);
+  }
+  try {
+    await GxuNetworkSession().clearCookieJar();
+  } catch (e, s) {
+    log.warning('[setting][clearCookies] gxuNetwork failed', e, s);
+  }
+  try {
+    await SportSession().sportCookieJar.deleteAll();
+  } catch (e, s) {
+    log.warning('[setting][clearCookies] sport failed', e, s);
   }
 }
 

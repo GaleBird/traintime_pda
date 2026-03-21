@@ -8,10 +8,15 @@ import 'package:watermeter/repository/auth_exceptions.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
+import 'package:watermeter/repository/security/secure_file_store.dart';
 
 class GxuScoreSession {
   static const scoreListCacheName = "gxu_scores.json";
   static final File file = File("${supportPath.path}/$scoreListCacheName");
+  static final SecureFileStore _cacheStore = SecureFileStore(
+    file: file,
+    namespace: "gxu_score",
+  );
   static bool isScoreListCacheUsed = false;
 
   final GxuCASession caSession;
@@ -46,10 +51,11 @@ class GxuScoreSession {
   }
 
   GxuScoreSheet? _loadCache() {
-    if (!file.existsSync()) {
+    final rawText = _cacheStore.readAsStringSync();
+    if (rawText == null) {
       return null;
     }
-    final raw = jsonDecode(file.readAsStringSync());
+    final raw = jsonDecode(rawText);
     if (raw is! Map) {
       throw const LoginFailedException(msg: "广西大学成绩缓存已损坏。");
     }
@@ -66,7 +72,7 @@ class GxuScoreSession {
   }
 
   void _dumpCache(GxuScoreSheet sheet) {
-    file.writeAsStringSync(jsonEncode(sheet.toJson()));
+    _cacheStore.writeAsStringSync(jsonEncode(sheet.toJson()));
   }
 
   Future<GxuScoreSheet> _fetchRemote() async {

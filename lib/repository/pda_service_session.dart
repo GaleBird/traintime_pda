@@ -13,6 +13,7 @@ import 'package:watermeter/model/pda_service/message.dart';
 import 'package:watermeter/repository/fork_info.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/preference.dart' as pref;
+import 'package:watermeter/repository/security/update_manifest_security.dart';
 import 'package:watermeter/repository/update_build_number.dart';
 
 enum UpdateCheckResult { available, latest, localAhead, noRelease, failed }
@@ -66,11 +67,9 @@ void _startUpdateCheck() {
 }
 
 Future<UpdateMessage> _buildUpdateMessage(dynamic rawData) async {
-  final json = _asJsonMap(rawData);
-  final releaseUrl = _readString(
-    json,
-    'html_url',
-    fallback: ForkInfo.releasePageUrl,
+  final json = validateAndStripUpdateManifestSignature(rawData);
+  final releaseUrl = _validatedReleaseUrl(
+    _readString(json, 'html_url', fallback: ForkInfo.releasePageUrl),
   );
   final androidUrl = await _pickAndroidDownloadUrl(json['assets'], releaseUrl);
   return UpdateMessage(
@@ -140,15 +139,18 @@ Future<String> _pickAndroidDownloadUrl(
   dynamic rawAssets,
   String fallbackUrl,
 ) async {
+  final trustedFallback = _validatedReleaseUrl(fallbackUrl);
   final apkAssets = _parseAssets(
     rawAssets,
   ).where((asset) => asset.name.endsWith('.apk')).toList(growable: false);
   if (apkAssets.isEmpty) {
-    return fallbackUrl;
+    return trustedFallback;
   }
   final preferredKeywords = await _preferredAndroidAssetKeywords();
   final preferred = _findPreferredAsset(apkAssets, preferredKeywords);
-  return preferred?.downloadUrl ?? apkAssets.first.downloadUrl;
+  return _validatedAndroidDownloadUrl(
+    preferred?.downloadUrl ?? apkAssets.first.downloadUrl,
+  );
 }
 
 List<_ReleaseAsset> _parseAssets(dynamic rawAssets) {
@@ -215,6 +217,27 @@ _ReleaseAsset? _findPreferredAsset(
     }
   }
   return null;
+}
+
+String _validatedReleaseUrl(String rawUrl) {
+  return ensureTrustedUpdateUrl(
+    rawUrl,
+    allowedHosts: ForkInfo.trustedUpdateReleaseHosts,
+  );
+}
+
+String _validatedAndroidDownloadUrl(String rawUrl) {
+  final uri = Uri.parse(
+    ensureTrustedUpdateUrl(
+      rawUrl,
+      allowedHosts: ForkInfo.trustedUpdateDownloadHosts,
+    ),
+  );
+  if (uri.host == ForkInfo.updateManifestSpacesHost &&
+      !uri.path.startsWith(ForkInfo.trustedSpacesReleasePathPrefix)) {
+    throw FormatException('Unexpected Spaces download path: ${uri.path}');
+  }
+  return uri.toString();
 }
 
 UpdateCheckResult _compareWithLocalVersion(String remoteCode) {

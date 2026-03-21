@@ -7,13 +7,15 @@ extension ClassTableControllerUserDefined on ClassTableController {
     );
     final userDefinedFileExists = userDefinedFile.existsSync();
     if (!userDefinedFileExists) {
-      userDefinedFile.writeAsStringSync(
+      _userDefinedClassStore.writeAsStringSync(
         jsonEncode(UserDefinedClassData.empty()),
       );
     }
-    userDefinedClassData = UserDefinedClassData.fromJson(
-      jsonDecode(userDefinedFile.readAsStringSync()),
-    );
+    final raw = _userDefinedClassStore.readAsStringSync();
+    if (raw == null) {
+      throw const FormatException("自定义课表缓存不存在。");
+    }
+    userDefinedClassData = UserDefinedClassData.fromJson(jsonDecode(raw));
   }
 
   Future<void> addUserDefinedClass(
@@ -23,7 +25,7 @@ extension ClassTableControllerUserDefined on ClassTableController {
     userDefinedClassData.userDefinedDetail.add(classDetail);
     timeArrangement.index = userDefinedClassData.userDefinedDetail.length - 1;
     userDefinedClassData.timeArrangement.add(timeArrangement);
-    userDefinedFile.writeAsStringSync(
+    _userDefinedClassStore.writeAsStringSync(
       jsonEncode(userDefinedClassData.toJson()),
     );
     await updateClassTable(isUserDefinedChanged: true);
@@ -63,7 +65,7 @@ extension ClassTableControllerUserDefined on ClassTableController {
     userDefinedClassData.userDefinedDetail[classDetailIndex].number =
         classDetail.number;
 
-    userDefinedFile.writeAsStringSync(
+    _userDefinedClassStore.writeAsStringSync(
       jsonEncode(userDefinedClassData.toJson()),
     );
     await updateClassTable(isUserDefinedChanged: true);
@@ -81,7 +83,7 @@ extension ClassTableControllerUserDefined on ClassTableController {
       }
     }
 
-    userDefinedFile.writeAsStringSync(
+    _userDefinedClassStore.writeAsStringSync(
       jsonEncode(userDefinedClassData.toJson()),
     );
     await updateClassTable(isUserDefinedChanged: true);

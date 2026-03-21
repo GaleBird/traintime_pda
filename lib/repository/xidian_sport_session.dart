@@ -16,6 +16,7 @@ import 'package:watermeter/repository/logger.dart';
 import 'package:get/get.dart';
 import 'package:watermeter/repository/network_session.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
+import 'package:watermeter/repository/security/secure_cookie_storage.dart';
 import 'package:watermeter/model/xidian_sport/score.dart';
 
 var sportClass = SportClass().obs;
@@ -27,7 +28,10 @@ class SportSession {
 
   final PersistCookieJar sportCookieJar = PersistCookieJar(
     persistSession: true,
-    storage: FileStorage("${supportPath.path}/cookie/sport/"),
+    storage: SecureCookieStorage(
+      namespace: "sport",
+      legacyDir: "${supportPath.path}/cookie/sport",
+    ),
   );
 
   /*

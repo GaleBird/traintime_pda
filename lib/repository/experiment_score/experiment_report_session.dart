@@ -125,8 +125,7 @@ class ExperimentReportSession extends NetworkSession {
 
     log.debug(
       "[experiment_report_session][getScoreImageUrls] "
-      "[Cookie String]\n$cookieStr\n"
-      "[Session ID]\n$sid\n",
+      "Session established (session id length: ${sid.length}).",
     );
 
     // Send machine info to sever
@@ -218,7 +217,7 @@ class ExperimentReportSession extends NetworkSession {
           cookieStr = 'UNI_GUI_SESSION_ID=$sid; sid=$sidValue';
           log.debug(
             "[experiment_report_session][getScoreImageUrls] "
-            "[Updated Cookie String]\n$cookieStr",
+            "Cookie updated.",
           );
           break;
         }
@@ -226,7 +225,7 @@ class ExperimentReportSession extends NetworkSession {
     } else {
       log.error(
         "[experiment_report_session][getScoreImageUrls] "
-        "[Updated Cookie String]\nclickResponse.headers['set-cookie'] is null",
+        "clickResponse.headers['set-cookie'] is null",
       );
     }
 

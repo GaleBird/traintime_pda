@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 import 'package:catcher_2/catcher_2.dart';
+import 'package:flutter/foundation.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -10,9 +11,16 @@ final log = TalkerFlutter.init();
 final logDioAdapter = TalkerDioLogger(
   talker: log,
   settings: const TalkerDioLoggerSettings(
-    printRequestHeaders: true,
-    printResponseHeaders: true,
-    printResponseMessage: true,
+    enabled: kDebugMode,
+    printRequestData: false,
+    printRequestHeaders: false,
+    printResponseData: false,
+    printResponseHeaders: false,
+    printResponseMessage: false,
+    printErrorData: false,
+    printErrorHeaders: false,
+    printErrorMessage: true,
+    hiddenHeaders: {"authorization", "cookie", "set-cookie"},
   ),
 );
 

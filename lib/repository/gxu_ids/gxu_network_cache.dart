@@ -7,10 +7,13 @@ import 'dart:io';
 import 'package:watermeter/model/gxu_ids/gxu_network_usage.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart';
+import 'package:watermeter/repository/security/secure_file_store.dart';
 
 const _gxuNetworkCacheName = "GxuNetworkUsage.json";
 
 File _cacheFile() => File("${supportPath.path}/$_gxuNetworkCacheName");
+SecureFileStore _cacheStore() =>
+    SecureFileStore(file: _cacheFile(), namespace: "gxu_network_usage");
 
 Future<GxuNetworkUsage?> loadGxuNetworkUsageCache() async {
   final file = _cacheFile();
@@ -19,7 +22,10 @@ Future<GxuNetworkUsage?> loadGxuNetworkUsageCache() async {
   }
 
   try {
-    final raw = await file.readAsString();
+    final raw = await _cacheStore().readAsString();
+    if (raw == null) {
+      return null;
+    }
     final json = jsonDecode(raw) as Map<String, dynamic>;
     return GxuNetworkUsage.fromJson(json);
   } catch (error, stackTrace) {
@@ -34,7 +40,7 @@ Future<GxuNetworkUsage?> loadGxuNetworkUsageCache() async {
 
 Future<void> saveGxuNetworkUsageCache(GxuNetworkUsage usage) async {
   try {
-    await _cacheFile().writeAsString(jsonEncode(usage.toJson()));
+    await _cacheStore().writeAsString(jsonEncode(usage.toJson()));
   } catch (error, stackTrace) {
     log.warning(
       "[GxuNetworkCache] Failed to save network usage cache.",
