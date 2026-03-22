@@ -43,7 +43,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.github.benderblog.traintime_pda.widget.classtable.CLICK" />
+                <action android:name="${applicationId}.widget.classtable.CLICK" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/classtable_widget_config" />

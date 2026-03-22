@@ -3,6 +3,7 @@
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:watermeter/page/classtable/class_table_view/class_card_layout.dart';
 
 class ClassCardPlaceBadge extends StatelessWidget {
   static const double _radius = 6;
@@ -47,7 +48,7 @@ class ClassCardPlaceBadge extends StatelessWidget {
             style: style,
             maxLines: maxLines,
             minFontSize: minFontSize,
-            stepGranularity: 0.1,
+            stepGranularity: classCardTextStepGranularity,
             overflowReplacement: _CompressedPlaceText(
               value: value,
               style: style,

@@ -24,5 +24,7 @@
  - gxu.png：GXU 研课表启动图标
  - icon_gxu_concept.svg：GXU 研课表图标概念稿（项目自制）
  - gxu_name.svg：GXU 字标（由仓库根目录 name.svg 派生）
+ - new_name.png：GXU 字标候选源图
+ - new_name_wordmark.png：由 `new_name.png` 派生的透明底 GXU 字标 PNG
  - guide：西电信息技术中心
  - experiment_score：物理实验报告系统的分数图片原图

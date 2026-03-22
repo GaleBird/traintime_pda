@@ -12,7 +12,6 @@ import 'package:watermeter/page/public_widget/toast.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_ca_session.dart';
 import 'package:watermeter/repository/auth_exceptions.dart';
 import 'package:watermeter/repository/logger.dart';
-import 'package:watermeter/repository/preference.dart' as preference;
 
 class SmsLoginPanel extends StatefulWidget {
   final GxuCASession session;
@@ -39,6 +38,7 @@ class _SmsLoginPanelState extends State<SmsLoginPanel> {
 
   Timer? _smsTimer;
   int _countdownSeconds = 0;
+  bool _obscureCode = true;
 
   @override
   void dispose() {
@@ -80,17 +80,15 @@ class _SmsLoginPanelState extends State<SmsLoginPanel> {
     }
 
     try {
-      await widget.session.clearCookieJar();
       await widget.session.sendSmsCode(mobile: phone);
-      await preference.setString(preference.Preference.gxuCaPhone, phone);
       if (!mounted) return;
       showToast(
         context: context,
         msg: FlutterI18n.translate(context, "login.sms_sent"),
       );
       _startCountdown(_defaultCountdownSeconds);
-    } catch (e, s) {
-      log.warning("[sms_login_panel][send_sms] failed: $e\n$s");
+    } catch (e) {
+      log.warning("[sms_login_panel][send_sms] failed (${e.runtimeType}).");
       if (!mounted) return;
       final msg = e is LoginFailedException
           ? e.msg
@@ -107,6 +105,12 @@ class _SmsLoginPanelState extends State<SmsLoginPanel> {
       countdownSeconds: _countdownSeconds,
       onSendCode: _sendSmsCode,
       onSubmit: widget.onSubmit,
+      obscureCode: _obscureCode,
+      onToggleCodeVisibility: () {
+        setState(() {
+          _obscureCode = !_obscureCode;
+        });
+      },
       fieldSpacing: widget.fieldSpacing,
     );
   }

@@ -16,6 +16,7 @@ import 'package:watermeter/model/xidian_ids/exam.dart';
 import 'package:watermeter/repository/network_session.dart';
 import 'package:watermeter/repository/xidian_ids/exam_session.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
+import 'package:watermeter/repository/security/secure_file_store.dart';
 
 enum ExamStatus { cache, fetching, fetched, error, none }
 
@@ -26,6 +27,7 @@ class ExamController extends GetxController {
   String error = "";
   late ExamData data;
   late File file;
+  late SecureFileStore _cacheStore;
 
   List<HomeArrangement> getExamOfDate(DateTime now) {
     List<Subject> isFinished = List.from(data.subject);
@@ -93,14 +95,14 @@ class ExamController extends GetxController {
       "Path at ${supportPath.path}.",
     );
     file = File("${supportPath.path}/$examDataCacheName");
-    bool isExist = file.existsSync();
-
-    if (isExist) {
+    _cacheStore = SecureFileStore(file: file, namespace: 'exam');
+    final cached = _cacheStore.readAsStringSync();
+    if (cached != null) {
       log.info(
         "[ExamController][onInit] "
         "Init from cache.",
       );
-      data = ExamData.fromJson(jsonDecode(file.readAsStringSync()));
+      data = ExamData.fromJson(jsonDecode(cached));
       status = ExamStatus.cache;
     } else {
       data = ExamData(subject: [], toBeArranged: []);
@@ -138,7 +140,7 @@ class ExamController extends GetxController {
           "[ExamController][get] "
           "Store to cache.",
         );
-        file.writeAsStringSync(jsonEncode(data.toJson()));
+        _cacheStore.writeAsStringSync(jsonEncode(data.toJson()));
         if (Platform.isIOS) {
           final api = SaveToGroupIdSwiftApi();
           try {

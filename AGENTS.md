@@ -68,26 +68,33 @@ Build examples:
 - Historical XDU logic may still exist in code, but future edits should prefer direct GXU replacement over compatibility layers. Earlier notes about keeping XDU reference entries or a shared dual-school login flow are obsolete.
 - App startup now forces `Preference.isGxuMode = true`; do not reintroduce user-facing XDU/GXU mode switching unless the user explicitly asks for multi-school support again.
 - `LoginWindow` is GXU-only again and should log in through `GxuCASession` directly; the temporary school-mode selector and XDU login branch have been removed.
-- `LoginWindow` 现支持“账号密码 / 短信验证码”两种统一认证登录：短信登录会把手机号缓存到 `Preference.gxuCaPhone`，但不会覆盖 `Preference.idsAccount`；当 Cookie 过期且缺少账号/密码时，`GxuCASession.ensureYjsxtLoggedIn` 会显式报错提示重新登录。
-- 短信登录里的短信验证码输入框保持明文显示，不再用密码样式隐藏数字。
+- `LoginWindow` 现支持“账号密码 / 短信验证码”两种统一认证登录：短信发送与短信提交都必须在 `GxuCASession` 内部先清空旧 Cookie，再走新的统一认证会话；短信登录手机号只在登录成功后写入 `Preference.gxuCaPhone`，并会清理旧 `idsAccount` / `idsPassword`，当 Cookie 过期且缺少账号/密码时，`GxuCASession.ensureYjsxtLoggedIn` 会显式报错提示重新登录。
+- `Preference.gxuCaPhone` 与 `Preference.schoolNetQueryAccount` 现按敏感字符串走 `flutter_secure_storage`，不要再放回普通 SharedPreferences。
+- 短信登录里的短信验证码输入框恢复为默认隐藏、可切换显示，避免旁观/录屏场景下直接暴露验证码。
+- 登录页“忘记密码”入口当前指向的官方链路会上游跳转到非加密页面；应用侧只允许在弹出安全提示后用系统浏览器继续打开，不要再恢复成一键静默直开。
 - Login branding is GXU-only now: the login page header no longer shows the old app icon or text header, and instead uses the transparent SVG asset `assets/gxu_name.svg` derived from the repo-root `name.svg`. Keep the login page background plain and avoid reintroducing the rejected gradient/glow treatment.
 - The login page should use a fixed non-scroll layout, keep the whole content block slightly higher on the screen instead of vertically centering it, and still subtract `viewInsets.bottom` from the portrait visible height so short screens keep the login button reachable above the keyboard. Password login uses explicit focus-node handoff from account to password so the keyboard `下一项` button does not dismiss the keyboard, password/SMS-code fields trigger login from the keyboard action button, and password login keeps the original GXU behavior of always persisting `idsAccount` and `idsPassword` after a successful login.
 - The SMS login row should stay on one line with an approximately `2:1` width split between the verification-code field and the `获取短信` button; do not switch it back to a stacked layout unless the user asks again.
 - App 启动首页入口现在走 `StartupGate`：有缓存账号密码时直接进首页；若仅缓存了短信登录手机号，则先校验 `GxuCASession.isYjsxtLoggedIn()` 再决定进首页还是登录页，避免会话仍有效时先闪出登录页。
 - `ToolBoxPage` should keep the GXU `网络查询` entry first with the Wi-Fi icon. Remaining GXU-unadapted toolbox items should be shown as `（未完成）` placeholders that open the in-app unfinished page instead of any XDU website. The old XDU `网络查询`, `移动门户`, `物理计算`, and `睿思导航` toolbox entries are removed.
+- `ToolBoxPage` 的 `网络查询` 必须走原生 `NetworkCardWindow`，不要再用 WebView 打开 `self.gxu.edu.cn` 的 HTTP 页面，避免在 WebView 里暴露明文链路登录流程。
 - GXU homepage bottom navigation keeps four tabs in order: 首页 / 工具箱 / 猪图鉴赏 / 设置. `PigPage` remains a real page backed by `pighub.top`; do not remove the pig tab again unless the user explicitly asks to drop it.
 - The `订水系统` / `后勤报修` / `空间预约` unfinished toolbox placeholders now each have their own teaser copy instead of sharing the generic unfinished message; `缴费系统` keeps the generic unfinished copy.
 - GXU mode now also exposes a native homepage schoolnet card and a native single-page network detail screen; do not hide the schoolnet card on the GXU homepage anymore.
-- GXU native network query uses `Preference.idsAccount` as the account and `Preference.schoolNetQueryPassword` as the standalone Dr.COM self-service password. Login flow must try password-only submission first, and only fall back to captcha login when the server still rejects the session; captcha OCR should remain a fallback path instead of the default path.
+- GXU native network query now uses dedicated `Preference.schoolNetQueryAccount` plus `Preference.schoolNetQueryPassword`; password login auto-syncs the current account into the schoolnet account field, while SMS login only reuses a manually confirmed schoolnet account for the same cached phone. Missing schoolnet account/password must open the native account-password dialog directly instead of only telling the user to re-login. Login flow must still try password-only submission first, and only fall back to captcha login when the server still rejects the session; captcha OCR should remain a fallback path instead of the default path.
 - GXU network query is cache-first: app startup and homepage refresh must preload/show the last successful cached `GxuNetworkUsage` instead of auto-refreshing `self.gxu.edu.cn`, and users refresh manually from the GXU network detail page when they want live data.
 - GXU homepage schoolnet card now summarizes used traffic in `GB` and shows relative cache age; the GXU detail page should keep showing cached data plus refresh-status hints even if a later refresh fails.
 - GXU network detail refresh must release `gxuNetworkRefreshing` even on early exits such as missing query password or missing account, otherwise the refresh button stays disabled until app restart after the user fixes the input.
 - GXU dashboard parsing is label-based around `下次结算 / 已用流量 / 免费流量 / 可用流量 / 消费保护 / 账户余额`; if those labels disappear, surface an explicit page-structure error instead of silently faking data.
 - GXU homepage current/next-course logic must not switch to "tomorrow" before 22:05, because GXU晚课会持续到第 13 节结束。
 - GXU classtable top week row ("第x周") uses compact height (56) on tall screens to avoid squeezing period time labels.
+- GXU classtable top week row responsive breakpoints must use the actual classtable body viewport height after the AppBar, not `MediaQuery` full-route height; common ~640dp body heights on mainstream phones should fall into the compact week-row tier.
 - GXU classtable now uses a segmented block layout with `午休/晚休` separators; `晚休` maps to periods 9-10, and the evening section shows periods 11-13 after it.
 - GXU classtable does not use vertical scrolling; the left period column shows start time on top and end time at bottom for each period.
 - GXU classtable left period column adds subtle row dividers, with start time emphasized and end time deemphasized to improve boundary readability.
+- GXU 日程表在小窗/矮屏下也必须无溢出：顶部周次条、日期行、左侧节次列会按可用高度切换到紧凑尺寸；节次时间与 `午休/晚休` 标签要可缩放适配，不能再出现 split-screen 下的 `RenderFlex overflow`。
+- GXU 课表卡片在超窄列宽下要强制进入紧凑布局：隐藏老师行、压缩地点最小字号与内边距，优先保证课程名和上课地点可读。
+- GXU 课表卡片里的 `AutoSizeText` 最小字号必须和步进粒度保持整倍数关系；当前课程名/地点统一使用 `0.5` 的步进粒度，避免真机小窗下触发 `MinFontSize must be a multiple of stepGranularity` 断言。
 - GXU homepage pull-to-refresh is a user-requested remote sync: it must call `ClassTableController.updateClassTable(isForce: true)` instead of reusing the 2-day cache window, and the success toast may only appear when `ClassTableController.error == null`; cached fallback after a refresh failure must surface the failure message instead of pretending refresh succeeded.
 - `Preference.classTableCacheMode` exists to prevent reuse of stale XDU cache while the codebase is still being cleaned into a GXU-only fork.
 - When GXU class-table refresh falls back to same-mode cache after a login/refresh error, `ClassTableController.state` remains `fetched` but `error` preserves the refresh failure so startup flow can avoid showing a false "已加载" toast.
@@ -125,7 +132,9 @@ Build examples:
 - App 检查更新现在读取 DigitalOcean Spaces 清单 `https://myapk.sgp1.cdn.digitaloceanspaces.com/manifests/update.json`，实现位于 `lib/repository/pda_service_session.dart`；不要再接回旧的 `legacy.superbart.top/traintime_pda_backend` 或 GitHub `latest release` 直读接口。
 - 更新清单现在必须通过 `RSA-SHA256` 签名校验后才会被接受：公钥和 key id 固定在 `lib/repository/fork_info.dart`，校验逻辑在 `lib/repository/security/update_manifest_security.dart`，下载链接也会限制为受信任的 `https` host。若清单缺签名、签名不匹配或下载地址越界，应用内检查更新必须显式失败，不能静默降级。
 - 更新版本比较现在同时比较 `pubspec.yaml` 的语义版本和 `+build`；发布 tag 应与 `pubspec.yaml` 版本完全一致，格式优先使用 `v1.0.1+41` 这类带 build 号的 tag，否则应用内更新提示可能无法正确判断新旧版本。
+- Android debug 包（`applicationIdSuffix ".dev"` / `versionNameSuffix "-dev"`）必须视为测试安装：`checkUpdate()` 仍可拉取远端清单用于展示最新发布信息，但比较结果要直接视为 `localAhead`，不能再把 release APK 当作当前 `.dev` 包的可升级版本。
 - Android 更新弹窗优先打开与设备 ABI 匹配的 Spaces APK 直链，`UpdateMessage.fdroid` 继续承载 Android 下载地址，GitHub Release 按钮仅作为备用下载入口；维护下载来源时不要恢复 F-Droid 旧链接逻辑。
+- `tool/generators/generate_update_manifest.py` 生成的 `update.json` 现包含每个 APK 的 `sha256` 与 `size` 字段（并参与签名）；客户端解析时会校验字段格式，便于后续实现下载产物完整性校验闭环。
 - Android 更新比较会先对当前项目的 split APK `versionCode` 做归一化：只有符合 `build.gradle` 覆盖规则的 `411+` / `...1|2|3` 这类 Android build 才会先除以 `10` 还原真实 build（例如安装包 `433` 视为发布 build `43`）；普通通用 APK 的 `41/42/43` 不能再被误判成 split 包。
 - 官网下载页现已独立部署在 `gxu.app`：静态资源源码位于 `website/public/`，Node 服务位于 `website/service/`，部署模板在 `website/deploy/`。线上结构是 `Caddy -> /var/www/gxu.app/public + reverse_proxy 127.0.0.1:9080 -> gxu-app.service`，其中 `/api/update` 代理 Spaces `update.json`，`/api/stats` 返回真实下载计数，`/download/*` 先计数再 302 到 DigitalOcean Spaces 或 GitHub Release。
 - 官网对外主入口当前是单页首页：首屏只保留下载按钮、版本/下载次数和当前发布摘要；功能与仓库来源继续留在同一页，不要再把首页改回多页面导航入口或超大海报式首屏。
@@ -140,11 +149,13 @@ Build examples:
 - 当前 Android Release CI 的真实坑点不是 Node 警告，而是 release 签名：若日志出现 `KeytoolException` / `Tag number over 30 is not supported`，多数是 keystore 类型或内容不匹配导致解析失败。工作流会在 `JKS` / `PKCS12` 间自动探测 `storeType` 并写入 `android/key.properties`；若两种类型都无法通过 `keytool -list` 校验，则优先检查 `SIGNING_KEY` 是否为 keystore 文件二进制的 base64（只能编码一次），以及 `SIGNING_PASSWORD` / `SIGNING_ALIAS` 是否正确。
 - Android 发版工作流会在签名步骤前创建并持续追加 `build_apk.log`；失败时 artifact 上传不会再出现 “No files were found with the provided path: build_apk.log” 的噪音警告。注意 GitHub 上的 “Re-run jobs” 会复用旧 commit 的 workflow 文件，不会应用后来提交的工作流修复；需要重新推 tag 或用 `workflow_dispatch` 对最新 commit 触发一次新运行。
 - 这台机器当前没有 `gh` 命令；若用户要“上传 APK 到 GitHub”，优先走“push tag 触发 GitHub Actions release”而不是依赖本地 GitHub CLI 直传。
+- Android debug 包名显示不要再依赖 `build.gradle` 里的单条 `resValue "app_name"`；中文和繁中会被主资源目录覆盖。调试构建专用名称统一放在 `android/app/src/debug/res/values*/strings.xml`。
 - 本地安全回归检查脚本是 `tool/security_audit.dart`；它会扫描私钥/签名文件、TLS 绕过、明文 Cookie 存储、危险日志配置和更新签名接入缺失。做安全相关改动后优先运行 `.flutter/bin/dart run tool/security_audit.dart`。
 - `tool/generators/generate_gxu_launcher_icon.py` 现在用于把任意源图标准化为实际打包使用的 `assets/gxu.png`；需要替换品牌图时，优先运行该脚本并通过 `--source` 指向新图片，再执行 `flutter_launcher_icons` / `flutter_native_splash`。
 - 当前 launcher/splash 图标源图已切到 `assets/Gemini_Generated_Image_2dp0k82dp0k82dp0.png`，并通过 `tool/generators/generate_gxu_launcher_icon.py --source assets/Gemini_Generated_Image_2dp0k82dp0k82dp0.png` 生成 `assets/gxu.png`；后续若重跑图标生成流程，默认以该源图为基准。
 - 设计上下文已写入仓库根目录 `.impeccable.md`，后续界面/品牌类改动遵循“校园自然系：西大绿 + 米白 + 金色点缀”。
 - `PigPage` 仍是首页底部导航的正式入口；不要再移除“猪图鉴赏”，除非用户明确要求。
+- GXU 字标统一走 `lib/page/public_widget/gxu_wordmark.dart`，不要在页面里直接裸用 `SvgPicture.asset('assets/gxu_name.svg')`。当前默认资源已切到透明底 PNG `assets/new_name_wordmark.png`（由 `assets/new_name.png` 派生），因为旧 SVG 字标在真机上存在字形缺损；该组件继续负责暗色主题浅色着色。
 - GXU 选课情况页的学期筛选改为显式下拉框，入口文案要让用户直接看出“这里可以选学期”；选课概览保持信息优先的卡片式汇总。
 - GXU 选课情况页顶部概览和筛选区保持紧凑，避免“选课概览”和搜索区占据过高首屏；搜索框提示文案用简短表达即可。
 - GXU 选课卡片不展示上课时间文本，课程标题下方优先展示老师姓名；若接口返回多个老师，只显示第一个老师名称。
@@ -153,8 +164,12 @@ Build examples:
 - GXU 选课情况缓存策略不再固定 15 分钟：自动进入页面时需读取研究生系统首页 `/yjsjbxx/init/index/page` 的 `xuankeDate.STATUS`。`进行中/未开始` 自动缓存 24 小时，`已结束` 则持续使用本地缓存直到用户手动刷新；页面刷新按钮必须继续强制拉取远端最新数据。
 - GXU 课表卡片现在要优先保证上课地点能完整看清：地点文本改为多行自适应并在极端长度时压缩显示，老师信息只在卡片高度足够时再追加展示；若老师字段包含多人，只展示第一个老师名称。
 - GXU 课表卡片里的上课地点继续保持强调显示：地点区域使用更强的字重和浅色底块标签样式，视觉层级要明显高于老师信息。
+- GXU “我的日程表”课程卡片视觉结构以 `v1.0.2+45` 为基准：左对齐三段式布局保持“顶部课程名 / 中部整宽地点标签 / 底部老师”，不要再改成居中胶囊式排版；仅允许保留小窗防溢出和 AutoSizeText 步进合法性修复。
+- GXU 课表卡片的“超窄列宽紧凑布局”只应在真正极窄的小窗列宽触发；主流 320dp 手机上一天七列后的常规课程卡片仍应保留“顶部课程名 / 中部地点标签 / 底部老师”的三段式布局，老师多人时只显示第一个名字。
+- GXU 课表卡片在重叠课程合并和连续布局路径下也要继续传递老师字段，不能因为聚合过程把底部老师行丢掉。
 - GXU 日程表不再显示“非本周 / 回到本周”状态入口；周次切换只保留顶部周次条与左右滑动。日期行需保持紧凑，当前日期高亮时也不能出现 RenderFlex 溢出。
 - 关于页不再展示“应用图标”概念入口；旧概念资源 `assets/icon_gxu_concept.svg` 仍可留作品牌素材，但默认不出现在设置页。
-- “知道更多”页采用“维护者优先，但明确标注上游开源来源”的结构：首屏先展示当前维护者，再展示当前版本贡献、项目/仓库入口和开源许可；不要把它做成纯法律说明页或只强调个人品牌。
+- 设置/关于页里的项目介绍保持简洁来源导向：不要再展示“当前维护者 / 维护者主页 / 某人维护版”这类中心化维护者信息，默认只保留“项目来源、当前仓库、上游仓库、开源许可、非官方说明”等必要信息。
+- “知道更多”页改为“项目来源优先”的简洁结构：首屏只说明当前 GXU 版本与上游 `Traintime PDA / XDYou` 的关系，再展示当前仓库、上游仓库、开源许可和非官方说明；不要再做成维护者展示页。
 - 关于页致谢区改为纯文字表达，使用“感谢原开发团队与贡献者”这类文案即可；不要再恢复贡献者头像墙或把这块写成“当前 GXU 版本全部由这些人共同维护”的表述。
-- README 首屏与 App 关于页统一按“GXU 独立维护线”对外呈现：明确当前版本面向广西大学研究生、当前维护者优先展示、明确标注上游项目名 `Traintime PDA / XDYou`，同时保留 LICENSE 与源码版权头说明；仓库独立化历史处理使用 `tool/create_standalone_history.ps1`，不要在脏工作区直接手改主分支历史。
+- README 首屏与 App 关于页统一按“GXU 独立维护线”对外呈现：明确当前版本面向广西大学研究生、明确标注上游项目名 `Traintime PDA / XDYou`，同时保留 LICENSE 与源码版权头说明；App 关于页不再做维护者优先展示。仓库独立化历史处理使用 `tool/create_standalone_history.ps1`，不要在脏工作区直接手改主分支历史。

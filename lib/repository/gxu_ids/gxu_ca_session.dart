@@ -77,6 +77,7 @@ class GxuCASession {
   );
 
   Future<void> sendSmsCode({required String mobile}) async {
+    await clearCookieJar();
     await dio.get(_buildLoginUrl());
     final response = await dio.get(
       _smsSendPath,
@@ -106,6 +107,7 @@ class GxuCASession {
     required String code,
     void Function(int, String)? onResponse,
   }) async {
+    await clearCookieJar();
     onResponse?.call(10, "login_process.ready_page");
     final loginUrl = _buildLoginUrl();
     final loginPage = await dio.get(loginUrl);

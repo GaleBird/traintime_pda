@@ -3,6 +3,13 @@
 
 import 'package:flutter/widgets.dart';
 
+const double classCardTextStepGranularity = 0.5;
+const double _phoneCompactWidth = 35.0;
+const double _phoneTinyHeight = 44.0;
+const double _phoneTeacherHeight = 72.0;
+const double _desktopCompactHeight = 60.0;
+const double _desktopTeacherHeight = 96.0;
+
 class ClassCardLayoutSpec {
   final int nameMaxLines;
   final int placeMaxLines;
@@ -21,25 +28,37 @@ class ClassCardLayoutSpec {
 
 ClassCardLayoutSpec resolveClassCardLayout({
   required bool isPhoneLayout,
+  required double width,
   required double height,
   required bool hasTeacher,
 }) {
+  final isCompactWidth = width < _phoneCompactWidth;
+
   if (isPhoneLayout) {
-    if (height < 44) {
+    if (height < _phoneTinyHeight) {
       return const ClassCardLayoutSpec(
         nameMaxLines: 1,
         placeMaxLines: 2,
         showTeacher: false,
-        placeMinFontSize: 6.2,
+        placeMinFontSize: 6.0,
         padding: EdgeInsets.fromLTRB(2, 3, 2, 3),
       );
     }
-    if (height < 72 || !hasTeacher) {
+    if (isCompactWidth) {
+      return const ClassCardLayoutSpec(
+        nameMaxLines: 1,
+        placeMaxLines: 2,
+        showTeacher: false,
+        placeMinFontSize: 6.0,
+        padding: EdgeInsets.fromLTRB(2, 3, 2, 3),
+      );
+    }
+    if (height < _phoneTeacherHeight || !hasTeacher) {
       return const ClassCardLayoutSpec(
         nameMaxLines: 1,
         placeMaxLines: 3,
         showTeacher: false,
-        placeMinFontSize: 6.6,
+        placeMinFontSize: 6.5,
         padding: EdgeInsets.fromLTRB(2, 3, 2, 3),
       );
     }
@@ -47,26 +66,26 @@ ClassCardLayoutSpec resolveClassCardLayout({
       nameMaxLines: 2,
       placeMaxLines: 2,
       showTeacher: true,
-      placeMinFontSize: 6.8,
+      placeMinFontSize: 7.0,
       padding: EdgeInsets.fromLTRB(3, 4, 3, 4),
     );
   }
 
-  if (height < 60) {
+  if (height < _desktopCompactHeight) {
     return const ClassCardLayoutSpec(
       nameMaxLines: 1,
       placeMaxLines: 2,
       showTeacher: false,
-      placeMinFontSize: 7.2,
+      placeMinFontSize: 7.0,
       padding: EdgeInsets.fromLTRB(3, 4, 3, 4),
     );
   }
-  if (height < 96 || !hasTeacher) {
+  if (height < _desktopTeacherHeight || !hasTeacher) {
     return const ClassCardLayoutSpec(
       nameMaxLines: 2,
       placeMaxLines: 3,
       showTeacher: false,
-      placeMinFontSize: 7.6,
+      placeMinFontSize: 7.5,
       padding: EdgeInsets.fromLTRB(4, 4, 4, 4),
     );
   }
@@ -74,7 +93,7 @@ ClassCardLayoutSpec resolveClassCardLayout({
     nameMaxLines: 2,
     placeMaxLines: 3,
     showTeacher: true,
-    placeMinFontSize: 7.8,
+    placeMinFontSize: 8.0,
     padding: EdgeInsets.fromLTRB(4, 5, 4, 5),
   );
 }

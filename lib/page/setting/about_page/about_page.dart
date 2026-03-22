@@ -26,11 +26,6 @@ class AboutPage extends StatefulWidget {
 class _AboutPageState extends State<AboutPage> {
   List<Link> linkData() => [
     Link(
-      icon: const Icon(Icons.home),
-      name: FlutterI18n.translate(context, "setting.about_page.homepage"),
-      url: ForkInfo.maintainerUrl,
-    ),
-    Link(
       icon: const Icon(Icons.code),
       name: FlutterI18n.translate(context, "setting.about_page.code"),
       url: ForkInfo.repositoryUrl,
@@ -66,11 +61,7 @@ class _AboutPageState extends State<AboutPage> {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
-              FlutterI18n.translate(
-                context,
-                "setting.header_subtitle",
-                translationParams: {"maintainer": ForkInfo.maintainer},
-              ),
+              FlutterI18n.translate(context, "setting.header_subtitle"),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: scheme.onPrimaryContainer,
@@ -90,7 +81,7 @@ class _AboutPageState extends State<AboutPage> {
 
   Widget get _developerList => ReXCard(
     title: Text(
-      FlutterI18n.translate(context, "setting.acknowledgement"),
+      FlutterI18n.translate(context, "setting.about_page.project_origin_title"),
     ).padding(bottom: 8).center(),
     remaining: const [],
     bottomRow: Column(
@@ -99,8 +90,7 @@ class _AboutPageState extends State<AboutPage> {
         Text(
           FlutterI18n.translate(
             context,
-            "setting.about_page.fork_maintainer_description",
-            translationParams: {"maintainer": ForkInfo.maintainer},
+            "setting.about_page.project_origin_summary",
           ),
           style: Theme.of(context).textTheme.bodyMedium,
           textAlign: TextAlign.left,
@@ -109,7 +99,7 @@ class _AboutPageState extends State<AboutPage> {
         Text(
           FlutterI18n.translate(
             context,
-            "setting.about_page.upstream_acknowledgement_subtitle",
+            "setting.about_page.project_origin_thanks",
           ),
           style: Theme.of(context).textTheme.bodyMedium,
           textAlign: TextAlign.left,

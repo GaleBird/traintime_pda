@@ -2,11 +2,14 @@
 
 import argparse
 import base64
+import hashlib
 import json
 from pathlib import Path
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+
+HASH_CHUNK_SIZE = 1024 * 1024
 
 
 def parse_args() -> argparse.Namespace:
@@ -32,12 +35,19 @@ def build_manifest_payload(args: argparse.Namespace) -> dict:
   tag = args.tag.strip()
   assets = []
   for asset_path in args.asset_path:
-    asset_name = Path(asset_path).name
+    asset_file = Path(asset_path)
+    asset_name = asset_file.name
     if not asset_name:
       raise ValueError("asset-path must point to a file")
+    sha256 = hashlib.sha256()
+    with asset_file.open("rb") as f:
+      for chunk in iter(lambda: f.read(HASH_CHUNK_SIZE), b""):
+        sha256.update(chunk)
     assets.append({
       "name": asset_name,
       "browser_download_url": f"{cdn_base_url}/releases/{tag}/{asset_name}",
+      "size": asset_file.stat().st_size,
+      "sha256": sha256.hexdigest(),
     })
   return {
     "tag_name": tag,

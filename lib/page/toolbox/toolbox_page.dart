@@ -5,40 +5,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:watermeter/model/toolbox_addresses.dart';
+import 'package:watermeter/page/schoolnet/network_card_window.dart';
 import 'package:watermeter/page/toolbox/unfinished_feature_page.dart';
 import 'package:watermeter/page/toolbox/webview_list_tile.dart';
 
 class ToolBoxPage extends StatelessWidget {
   const ToolBoxPage({super.key});
 
-  WebViewAddresses _buildAddress(
-    BuildContext context, {
-    required String nameKey,
-    required String url,
-    required String descriptionKey,
-    required IconData iconData,
-    LaunchMode launchMode = LaunchMode.externalApplication,
-  }) {
-    return WebViewAddresses(
-      name: FlutterI18n.translate(context, nameKey),
-      url: url,
-      description: FlutterI18n.translate(context, descriptionKey),
-      iconData: iconData,
-      launchMode: launchMode,
-    );
-  }
-
   List<WebViewAddresses> _buildGxuAddresses(BuildContext context) {
     return [
-      _buildAddress(
-        context,
-        nameKey: "toolbox.network",
-        url: "http://self.gxu.edu.cn/dashboard",
-        descriptionKey: "toolbox.network_fee_description",
+      WebViewAddresses(
+        name: FlutterI18n.translate(context, "toolbox.network"),
+        description: FlutterI18n.translate(
+          context,
+          "toolbox.network_fee_description",
+        ),
         iconData: MingCuteIcons.mgc_wifi_line,
-        launchMode: LaunchMode.inAppBrowserView,
+        pageBuilder: (context) => const NetworkCardWindow(),
       ),
       ..._buildUnfinishedAddresses(context),
     ];

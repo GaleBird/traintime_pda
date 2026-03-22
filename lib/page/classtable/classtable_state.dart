@@ -583,6 +583,7 @@ END:VTIMEZONE
           color: shouldNew ? event.color : arrangedEventData.color,
           name: shouldNew ? event.name : arrangedEventData.name,
           place: shouldNew ? event.place : arrangedEventData.place,
+          teacher: shouldNew ? event.teacher : arrangedEventData.teacher,
         );
 
         arrangedEvents[eventIndex] = newEvent;

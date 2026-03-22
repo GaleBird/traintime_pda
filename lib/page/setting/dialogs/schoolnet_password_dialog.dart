@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:watermeter/page/public_widget/toast.dart';
+import 'package:watermeter/repository/gxu_ids/gxu_schoolnet_credentials.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
 
 class SchoolNetPasswordDialog extends StatefulWidget {
@@ -18,6 +19,7 @@ class SchoolNetPasswordDialog extends StatefulWidget {
 }
 
 class _SchoolNetPasswordDialogState extends State<SchoolNetPasswordDialog> {
+  late final TextEditingController _accountController;
   late final TextEditingController _schoolNetPasswordController;
 
   bool _couldView = true;
@@ -25,8 +27,15 @@ class _SchoolNetPasswordDialogState extends State<SchoolNetPasswordDialog> {
   @override
   void initState() {
     super.initState();
+    final account = getGxuSchoolnetAccountDraft();
     final pwd = preference.getString(
       preference.Preference.schoolNetQueryPassword,
+    );
+    _accountController = TextEditingController.fromValue(
+      TextEditingValue(
+        text: account,
+        selection: TextSelection.collapsed(offset: account.length),
+      ),
     );
     _schoolNetPasswordController = TextEditingController.fromValue(
       TextEditingValue(
@@ -38,6 +47,7 @@ class _SchoolNetPasswordDialogState extends State<SchoolNetPasswordDialog> {
 
   @override
   void dispose() {
+    _accountController.dispose();
     _schoolNetPasswordController.dispose();
     super.dispose();
   }
@@ -55,24 +65,60 @@ class _SchoolNetPasswordDialogState extends State<SchoolNetPasswordDialog> {
         fontSize: 20,
         color: Theme.of(context).colorScheme.onSurface,
       ),
-      content: TextField(
-        autofocus: true,
-        controller: _schoolNetPasswordController,
-        obscureText: _couldView,
-        decoration: InputDecoration(
-          hintText: FlutterI18n.translate(
-            context,
-            "setting.change_password_dialog.input_hint",
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            FlutterI18n.translate(context, "school_net.gxu.http_warning"),
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.35,
+              color: Colors.orange[900],
+            ),
           ),
-          suffixIcon: IconButton(
-            icon: Icon(_couldView ? Icons.visibility : Icons.visibility_off),
-            onPressed: () {
-              setState(() {
-                _couldView = !_couldView;
-              });
-            },
+          const SizedBox(height: 10),
+          TextField(
+            autofocus: true,
+            controller: _accountController,
+            decoration: InputDecoration(
+              labelText: FlutterI18n.translate(
+                context,
+                "school_net.gxu.account",
+              ),
+              hintText: FlutterI18n.translate(
+                context,
+                "setting.change_schoolnet_dialog.account_hint",
+              ),
+              prefixIcon: const Icon(Icons.person_outline),
+            ),
           ),
-        ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _schoolNetPasswordController,
+            obscureText: _couldView,
+            decoration: InputDecoration(
+              labelText: FlutterI18n.translate(
+                context,
+                "setting.schoolnet_password_setting",
+              ),
+              hintText: FlutterI18n.translate(
+                context,
+                "setting.change_schoolnet_dialog.password_hint",
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _couldView ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _couldView = !_couldView;
+                  });
+                },
+              ),
+            ),
+          ),
+        ],
       ),
       actions: <Widget>[
         TextButton(
@@ -84,24 +130,36 @@ class _SchoolNetPasswordDialogState extends State<SchoolNetPasswordDialog> {
         TextButton(
           child: Text(FlutterI18n.translate(context, "confirm")),
           onPressed: () async {
-            if (_schoolNetPasswordController.text.isNotEmpty) {
-              await preference.setString(
-                preference.Preference.schoolNetQueryPassword,
-                _schoolNetPasswordController.text,
-              );
-              if (!context.mounted) {
-                return;
-              }
-              Navigator.of(context).pop();
-            } else {
+            final account = _accountController.text.trim();
+            final password = _schoolNetPasswordController.text;
+            if (account.isEmpty) {
               showToast(
                 context: context,
                 msg: FlutterI18n.translate(
                   context,
-                  "setting.change_password_dialog.blank_input",
+                  "setting.change_schoolnet_dialog.account_required",
                 ),
               );
+              return;
             }
+            if (password.isEmpty) {
+              showToast(
+                context: context,
+                msg: FlutterI18n.translate(
+                  context,
+                  "setting.change_schoolnet_dialog.password_required",
+                ),
+              );
+              return;
+            }
+            await persistManualGxuSchoolnetCredentials(
+              account: account,
+              password: password,
+            );
+            if (!context.mounted) {
+              return;
+            }
+            Navigator.of(context).pop();
           },
         ),
       ],

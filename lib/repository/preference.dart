@@ -20,6 +20,8 @@ late SharedPreferencesWithCache prefs;
 late PackageInfo packageInfo;
 
 const Set<Preference> _secureStringKeys = {
+  Preference.gxuCaPhone,
+  Preference.schoolNetQueryAccount,
   Preference.idsPassword,
   Preference.schoolNetQueryPassword,
   Preference.sportPassword,
@@ -80,6 +82,14 @@ enum Preference {
   idsAccount(key: "idsAccount", type: "String"), // 一站式帐号
   idsPassword(key: "idsPassword", type: "String"), // 一站式密码
   gxuCaPhone(key: "gxuCaPhone", type: "String"), // 广西大学统一认证手机号（短信登录）
+  schoolNetQueryAccount(
+    key: "schoolNetQueryAccount",
+    type: "String",
+  ), // 校园网查询账号
+  schoolNetQueryAccountUserDefined(
+    key: "schoolNetQueryAccountUserDefined",
+    type: "bool",
+  ), // 校园网查询账号是否手动设置
   sportPassword(key: "sportPassword", type: "String"), // 体育系统密码
   experimentPassword(key: "experimentPassword", type: "String"), // 物理实验密码
   electricityPassword(key: "electricityPassword", type: "String"), // 电费密码

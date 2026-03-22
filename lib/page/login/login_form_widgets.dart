@@ -139,6 +139,8 @@ class SmsLoginFields extends StatelessWidget {
   final int countdownSeconds;
   final VoidCallback? onSendCode;
   final VoidCallback onSubmit;
+  final bool obscureCode;
+  final VoidCallback onToggleCodeVisibility;
   final double fieldSpacing;
 
   const SmsLoginFields({
@@ -148,6 +150,8 @@ class SmsLoginFields extends StatelessWidget {
     required this.countdownSeconds,
     required this.onSendCode,
     required this.onSubmit,
+    required this.obscureCode,
+    required this.onToggleCodeVisibility,
     required this.fieldSpacing,
   });
 
@@ -166,11 +170,16 @@ class SmsLoginFields extends StatelessWidget {
     return TextField(
       controller: codeController,
       keyboardType: TextInputType.number,
+      obscureText: obscureCode,
       textInputAction: TextInputAction.done,
       onSubmitted: (_) => onSubmit(),
       decoration: buildLoginInputDecoration(
         iconData: MingCuteIcons.mgc_safe_lock_fill,
         hintText: FlutterI18n.translate(context, "login.sms_code"),
+        suffixIcon: IconButton(
+          icon: Icon(obscureCode ? Icons.visibility : Icons.visibility_off),
+          onPressed: onToggleCodeVisibility,
+        ),
       ),
     );
   }

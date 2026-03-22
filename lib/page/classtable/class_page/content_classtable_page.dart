@@ -9,6 +9,7 @@ import 'package:styled_widget/styled_widget.dart';
 import 'package:watermeter/page/classtable/class_page/classtable_actions_menu.dart';
 import 'package:watermeter/page/classtable/class_page/classtable_week_pager.dart';
 import 'package:watermeter/page/classtable/classtable_constant.dart';
+import 'package:watermeter/page/classtable/classtable_responsive.dart';
 import 'package:watermeter/page/classtable/classtable_state.dart';
 import 'package:watermeter/page/classtable/class_page/week_choice_view.dart';
 import 'package:watermeter/page/classtable/class_page/week_navigation_utils.dart';
@@ -25,11 +26,9 @@ class ContentClassTablePage extends StatefulWidget {
 }
 
 class _ContentClassTablePageState extends State<ContentClassTablePage> {
-  static const double _topViewBigScreenMinHeight = 500;
   static const EdgeInsets _topRowPadding = EdgeInsets.only(top: 2, bottom: 4);
   static const double _selectedWeekHighlightAlpha = 0.3;
   static const double _unselectedWeekHighlightAlpha = 0.0;
-  static const EdgeInsets _weekChoiceInnerPadding = EdgeInsets.all(5);
   static const BorderRadius _weekChoiceBorderRadius = BorderRadius.all(
     Radius.circular(12.0),
   );
@@ -112,24 +111,24 @@ class _ContentClassTablePageState extends State<ContentClassTablePage> {
   }
 
   /// 周次切换栏。
-  Widget _topView() {
+  Widget _topView(
+    ClassTableHeaderMetrics metrics, {
+    required double viewportWidth,
+  }) {
     return SizedBox(
-      height: _topViewHeight(),
+      height: metrics.topViewHeight,
       child: Container(
         padding: _topRowPadding,
         color: Theme.of(context).colorScheme.surface,
-        child: _weekChoiceRow(),
+        child: _weekChoiceRow(metrics, viewportWidth: viewportWidth),
       ),
     );
   }
 
-  double _topViewHeight() {
-    return MediaQuery.sizeOf(context).height >= _topViewBigScreenMinHeight
-        ? topRowHeightBig
-        : topRowHeightSmall;
-  }
-
-  Widget _weekChoiceRow() {
+  Widget _weekChoiceRow(
+    ClassTableHeaderMetrics metrics, {
+    required double viewportWidth,
+  }) {
     return ScrollConfiguration(
       behavior: const NoGlowScrollBehavior(),
       child: ListView.builder(
@@ -139,12 +138,22 @@ class _ContentClassTablePageState extends State<ContentClassTablePage> {
         physics: const ClampingScrollPhysics(),
         scrollDirection: Axis.horizontal,
         itemCount: classTableState.semesterLength,
-        itemBuilder: _weekChoiceItem,
+        itemBuilder: (context, index) => _weekChoiceItem(
+          context,
+          index,
+          metrics,
+          viewportWidth: viewportWidth,
+        ),
       ),
     );
   }
 
-  Widget _weekChoiceItem(BuildContext context, int index) {
+  Widget _weekChoiceItem(
+    BuildContext context,
+    int index,
+    ClassTableHeaderMetrics metrics, {
+    required double viewportWidth,
+  }) {
     return Container(
       margin: const EdgeInsets.symmetric(
         horizontal: weekButtonHorizontalPadding,
@@ -166,8 +175,11 @@ class _ContentClassTablePageState extends State<ContentClassTablePage> {
               elevation: 0.0,
               child: InkWell(
                 borderRadius: _weekChoiceBorderRadius,
-                onTap: () => _onWeekTapped(index),
-                child: Padding(padding: _weekChoiceInnerPadding, child: child),
+                onTap: () => _onWeekTapped(index, viewportWidth: viewportWidth),
+                child: Padding(
+                  padding: metrics.weekChoiceInnerPadding,
+                  child: child,
+                ),
               ),
             );
           },
@@ -199,7 +211,10 @@ class _ContentClassTablePageState extends State<ContentClassTablePage> {
     return page.round();
   }
 
-  Future<void> _onWeekTapped(int weekIndex) async {
+  Future<void> _onWeekTapped(
+    int weekIndex, {
+    required double viewportWidth,
+  }) async {
     if (isTopRowLocked) return;
     final distance = (_currentWeekIndex() - weekIndex).abs();
     final duration = classTableWeekJumpDuration(distance: distance);
@@ -214,7 +229,7 @@ class _ContentClassTablePageState extends State<ContentClassTablePage> {
         rowControl.animateTo(
           _weekRowOffsetForIndex(
             index: weekIndex,
-            viewportWidth: MediaQuery.sizeOf(context).width,
+            viewportWidth: viewportWidth,
           ),
           duration: duration,
           curve: Curves.easeInOutCubic,
@@ -239,6 +254,38 @@ class _ContentClassTablePageState extends State<ContentClassTablePage> {
     }
   }
 
+  Widget _buildBody(BoxConstraints constraints) {
+    final viewportSize = Size(constraints.maxWidth, constraints.maxHeight);
+    final headerMetrics = resolveClassTableHeaderMetrics(viewportSize);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        _topView(headerMetrics, viewportWidth: viewportSize.width),
+        DecoratedBox(
+          decoration: decoration,
+          child: ClasstableWeekPager(
+            pageController: pageControl,
+            semesterLength: classTableState.semesterLength,
+            onPageChanged: (value) {
+              if (isTopRowLocked) return;
+              classTableState.chosenWeek = value;
+              if (!rowControl.hasClients) return;
+              rowControl.animateTo(
+                _weekRowOffsetForIndex(
+                  index: value,
+                  viewportWidth: viewportSize.width,
+                ),
+                duration: const Duration(milliseconds: changePageTime),
+                curve: Curves.easeInOut,
+              );
+            },
+          ),
+        ).expanded(),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -250,34 +297,8 @@ class _ContentClassTablePageState extends State<ContentClassTablePage> {
         ),
         actions: [ClasstableActionsMenu(classTableState: classTableState)],
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          PreferredSize(
-            preferredSize: Size.fromHeight(_topViewHeight()),
-            child: _topView(),
-          ),
-          DecoratedBox(
-            decoration: decoration,
-            child: ClasstableWeekPager(
-              pageController: pageControl,
-              semesterLength: classTableState.semesterLength,
-              onPageChanged: (value) {
-                if (isTopRowLocked) return;
-                classTableState.chosenWeek = value;
-                if (!rowControl.hasClients) return;
-                rowControl.animateTo(
-                  _weekRowOffsetForIndex(
-                    index: value,
-                    viewportWidth: MediaQuery.sizeOf(context).width,
-                  ),
-                  duration: const Duration(milliseconds: changePageTime),
-                  curve: Curves.easeInOut,
-                );
-              },
-            ),
-          ).expanded(),
-        ],
+      body: LayoutBuilder(
+        builder: (context, constraints) => _buildBody(constraints),
       ),
     );
   }

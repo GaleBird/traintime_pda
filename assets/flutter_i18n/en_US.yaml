@@ -440,6 +440,7 @@ homepage:
       cache_age: "Updated {age}"
       cache_refresh_failed: "Cached {age} ago, latest refresh failed"
       cache_need_password: "Cached {age} ago, refresh password missing"
+      cache_need_credentials: "Cached {age} ago, schoolnet account or password is incomplete"
    club_promotion:
       failed: "Failed to fetch club info"
       fetching: "Fetching club info"
@@ -518,6 +519,7 @@ login:
    failed_login_with_message: "Request failed, error message: {message}"
    failed_login_other: "Unknown error, please contact the developer"
    failed_open_forgot_password: "Unable to open the password recovery page"
+   forgot_password_security_warning: "The current official password recovery entry redirects to a non-encrypted page. The app will not autofill any credentials; continue only in a trusted network and open it with the system browser."
    clear_cache: "Clear cache"
    complete_clear_cache: "Cache cleared successfully"
    see_inspector: "View network interaction"
@@ -535,6 +537,7 @@ school_net:
       cached_notice: "This page shows the last successful cached result by default and does not auto-login on open."
       manual_refresh_hint: "Refresh only when you need the latest data. If the server requires captcha, an input dialog will appear."
       cache_hint_compact: "Showing cached data by default. Tap Refresh for latest (captcha may be required)."
+      http_warning: "Warning: This self-service portal uses HTTP without end-to-end encryption. Your query password may be intercepted. Use only on trusted networks and change your password regularly."
       overview: "Account overview"
       traffic: "Traffic usage"
       account: "Account"
@@ -544,12 +547,13 @@ school_net:
       available: "Available traffic"
       protection: "Spending protection"
       balance: "Account balance"
-      account_missing: "GXU account is missing. Please log in again."
+      account_missing: "Schoolnet query account is missing. Please complete it and retry."
       page_changed: "The GXU network page layout has changed and cannot be parsed."
       login_failed: "Failed to log in to the GXU network portal"
       no_cache_title: "No cached network data"
       no_cache_body: "Refresh once on first use. After that, the homepage will prefer the last successful result."
       cache_need_password: "Showing cached data. Set the query password before refreshing the latest data."
+      cache_need_credentials: "Showing cached data. Complete the schoolnet account and password before refreshing the latest data."
       cache_refresh_failed: "Showing cached data because the latest refresh failed."
       refresh_just_now: "just now"
       refresh_minutes: "{minutes} min"
@@ -590,7 +594,7 @@ school_net:
       remain: "Traffic used"
 
    fetching: "Fetching schoolnet usage data"
-   empty_password: "You may forgot to enter the schoolnet password"
+   empty_password: "Schoolnet query password is missing. Please complete it and retry."
    not_initalized: "It seems the backend is not open for query:P"
    captcha_failed: "Failed to idenify captcha"
    wrong_password: "Wrong schoolnet password"
@@ -713,7 +717,7 @@ setting:
    about_this_program: "About this APP"
    version: "Version：{version}"
    user_info: "User information"
-   header_subtitle: "Maintained by {maintainer} · Continuing from Traintime PDA / XDYou"
+   header_subtitle: "GXU edition based on Traintime PDA / XDYou"
    # 软件更新
    check_update: "Check for updates"
    latest_version: "Latest version: {latest}"
@@ -899,7 +903,12 @@ setting:
    change_password_dialog:
       input_hint: "Please input password here"
       blank_input: "Blank input!"
-   change_schoolnet_password_title: "Modify the schoolnet query password"
+   change_schoolnet_password_title: "Modify schoolnet query account and password"
+   change_schoolnet_dialog:
+      account_hint: "Enter the schoolnet query account here"
+      password_hint: "Enter the schoolnet query password here"
+      account_required: "Please enter the schoolnet query account"
+      password_required: "Please enter the schoolnet query password"
    update_dialog:
       new_version: "New version available"
       not_now: "Not now"
@@ -961,9 +970,15 @@ setting:
       code: "Current repository"
       upstream_code: "Upstream repository"
       upstream_acknowledgement_subtitle: "The current GXU version continues from the upstream open-source project Traintime PDA / XDYou. Thanks to the original team and past contributors for the feature foundation, historical work, and shared source code."
-      know_more_subtitle: "View maintainer, project origin, and licenses"
+      know_more_subtitle: "View project origin and licenses"
       project_links: "Project & licenses"
       project_notice: "Project notice"
+      project_origin_title: "Project origin"
+      project_origin_summary: "GXU Timetable evolves from the upstream open-source project Traintime PDA / XDYou, with adaptation and cleanup around the timetable, scores, and campus info flows used by GXU graduate students."
+      project_origin_thanks: "Thanks to the original team and past contributors for the feature foundation, historical work, and shared source code."
+      origin_badge: "Project origin"
+      origin_line: "GXU Timetable · For GXU graduate students"
+      origin_description: "Built on Traintime PDA / XDYou and refined around the everyday query scenarios of GXU graduate students."
       project_contribution_title: "Current version contributions"
       fork_maintainer_badge: "Current maintainer"
       fork_maintainer_project_line: "GXU Timetable · For GXU graduate students · Based on Traintime PDA / XDYou"
@@ -977,7 +992,7 @@ setting:
       legal_origin: "This project continues development based on the traintime_pda open-source project."
       legal_license: "The source code of this fork remains under Mozilla Public License v2.0."
       legal_independence: "This is an unofficial third-party app, and the GXU fork adapts features and interface for Guangxi University graduate students."
-      legal_upstream_notice: "The original authors and contributors of Traintime PDA / XDYou provide the open-source foundation, while {maintainer} maintains and releases the current GXU version."
+      legal_upstream_notice: "The original authors and contributors of Traintime PDA / XDYou provide the feature foundation, historical work, and open-source codebase."
       open_source_license: "Open source licenses"
       open_source_license_subtitle: "View Flutter and third-party dependency licenses"
       icon_page:
@@ -998,13 +1013,11 @@ setting:
         shapes: "Icon shapes"
         shape_ios: "iOS"
         shape_android: "Android"
-      know_more: "Learn more"
+      know_more: "Project origin"
       copyright_notice: |-
          This software is compiled, or derived from the traintime_pda (a.k.a watermeter) codebase, which is licensed under Mozilla Public License v2.0.
  
          This is an unofficial third-party app and is not officially affiliated with Guangxi University or related organizations mentioned by the upstream project.
- 
-         Current GXU version maintainer: {maintainer}.
  
          Copyright 2023-2025 BenderBlog Rodriguez and contributors.
          Copyright 2025 Traintime PDA authors.

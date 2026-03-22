@@ -10,7 +10,7 @@ import 'package:watermeter/page/classtable/class_table_view/class_table_break_de
 import 'package:watermeter/page/classtable/class_table_view/class_table_continuous_index_rows.dart';
 import 'package:watermeter/page/classtable/class_table_view/class_organized_data.dart';
 import 'package:watermeter/page/classtable/class_table_view/classtable_date_row.dart';
-import 'package:watermeter/page/classtable/classtable_constant.dart';
+import 'package:watermeter/page/classtable/classtable_responsive.dart';
 import 'package:watermeter/page/classtable/classtable_state.dart';
 import 'package:watermeter/page/public_widget/public_widget.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
@@ -33,16 +33,12 @@ class ClassTableView extends StatefulWidget {
 class _ClassTableViewState extends State<ClassTableView> {
   late ClassTableWidgetState classTableState;
   late BoxConstraints size;
+  late ClassTableGridMetrics gridMetrics;
   static const int _segmentedTotalBlocks = 61;
   static const int _phoneSegmentedScaleBlocks = 48;
 
   static const double _periodSpanBlocks = 5;
   static const double _breakSpanBlocks = 3;
-
-  static const double _periodIndexFontSize = 11;
-  static const double _periodTimeFontSize = 8;
-  static const double _breakLabelFontSize = 12;
-  static const double _periodCellVerticalPadding = 2;
   static const double _rowDividerWidth = 0.5;
 
   int get _totalBlocks {
@@ -54,14 +50,16 @@ class _ClassTableViewState extends State<ClassTableView> {
   }
 
   double blockheight(double count) =>
-      count * (widget.constraint.minHeight - midRowHeight) / _totalBlocks;
+      count *
+      (widget.constraint.minHeight - gridMetrics.dateRowHeight) /
+      _totalBlocks;
 
-  double get blockwidth => (size.maxWidth - leftRow) / 7;
+  double get blockwidth => (size.maxWidth - gridMetrics.leftColumnWidth) / 7;
 
   Widget _indexCellFrame({required double height, required Widget child}) {
     final dividerColor = Theme.of(context).dividerColor.withValues(alpha: 0.22);
     return Container(
-      width: leftRow,
+      width: gridMetrics.leftColumnWidth,
       height: height,
       alignment: Alignment.center,
       decoration: BoxDecoration(
@@ -79,7 +77,7 @@ class _ClassTableViewState extends State<ClassTableView> {
     final palette = ClassTableBreakDecoration.palette(scheme, i18nKey);
 
     return Container(
-      width: leftRow,
+      width: gridMetrics.leftColumnWidth,
       height: height,
       alignment: Alignment.center,
       decoration: BoxDecoration(
@@ -88,14 +86,33 @@ class _ClassTableViewState extends State<ClassTableView> {
           bottom: BorderSide(color: dividerColor, width: _rowDividerWidth),
         ),
       ),
-      child: Text(
-        FlutterI18n.translate(context, i18nKey),
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: _breakLabelFontSize,
-          fontWeight: FontWeight.w800,
-          color: palette.foregroundColor,
-          height: 1.0,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          FlutterI18n.translate(context, i18nKey),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: gridMetrics.breakLabelFontSize,
+            fontWeight: FontWeight.w800,
+            color: palette.foregroundColor,
+            height: 1.0,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _scaledPeriodLabel({
+    required String text,
+    required TextStyle style,
+    required Alignment alignment,
+  }) {
+    return Expanded(
+      child: Align(
+        alignment: alignment,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(text, textAlign: TextAlign.center, style: style),
         ),
       ),
     );
@@ -106,41 +123,46 @@ class _ClassTableViewState extends State<ClassTableView> {
     final stop = timeList[indexOfChar * 2 + 1];
     final period = indexOfChar + 1;
     final onSurface = Theme.of(context).colorScheme.onSurface;
+    final indexStyle = TextStyle(
+      fontSize: gridMetrics.periodIndexFontSize,
+      color: onSurface,
+      fontWeight: FontWeight.w600,
+    );
+    final startStyle = TextStyle(
+      fontSize: gridMetrics.periodTimeFontSize,
+      color: onSurface,
+      fontWeight: FontWeight.w600,
+    );
+    final stopStyle = TextStyle(
+      fontSize: gridMetrics.periodTimeFontSize,
+      color: onSurface.withValues(alpha: 0.55),
+      fontWeight: FontWeight.w600,
+    );
 
     return _indexCellFrame(
       height: height,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: _periodCellVerticalPadding,
+        padding: EdgeInsets.symmetric(
+          vertical: gridMetrics.periodCellVerticalPadding,
         ),
-        child: DefaultTextStyle.merge(
-          style: TextStyle(fontSize: _periodIndexFontSize, color: onSurface),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                start,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: _periodTimeFontSize,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                period.toString(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              Text(
-                stop,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: _periodTimeFontSize,
-                  color: onSurface.withValues(alpha: 0.55),
-                ),
-              ),
-            ],
-          ),
+        child: Column(
+          children: [
+            _scaledPeriodLabel(
+              text: start,
+              style: startStyle,
+              alignment: Alignment.topCenter,
+            ),
+            _scaledPeriodLabel(
+              text: period.toString(),
+              style: indexStyle,
+              alignment: Alignment.center,
+            ),
+            _scaledPeriodLabel(
+              text: stop,
+              style: stopStyle,
+              alignment: Alignment.bottomCenter,
+            ),
+          ],
         ),
       ),
     );
@@ -158,7 +180,7 @@ class _ClassTableViewState extends State<ClassTableView> {
             Positioned(
               top: blockheight(i.start),
               height: blockheight(i.stop - i.start),
-              left: leftRow + blockwidth * (index - 1),
+              left: gridMetrics.leftColumnWidth + blockwidth * (index - 1),
               width: blockwidth,
               child: ClassCard(detail: i),
             ),
@@ -181,7 +203,7 @@ class _ClassTableViewState extends State<ClassTableView> {
                 ).split("\n").map((e) => Text(e)),
               ],
             ),
-          ).padding(left: leftRow),
+          ).padding(left: gridMetrics.leftColumnWidth),
         );
       }
 
@@ -190,7 +212,7 @@ class _ClassTableViewState extends State<ClassTableView> {
       if (useContinuousClassLayout) {
         return buildContinuousClassTableIndexRows(
           context,
-          leftRowWidth: leftRow,
+          leftRowWidth: gridMetrics.leftColumnWidth,
           blockHeight: blockheight,
         );
       }
@@ -237,7 +259,12 @@ class _ClassTableViewState extends State<ClassTableView> {
     }
   }
 
-  void updateSize() => size = ClassTableState.of(context)!.constraints;
+  void updateSize() {
+    size = ClassTableState.of(context)!.constraints;
+    gridMetrics = resolveClassTableGridMetrics(
+      Size(size.maxWidth, widget.constraint.maxHeight),
+    );
+  }
 
   @override
   void didChangeDependencies() {
@@ -270,12 +297,12 @@ class _ClassTableViewState extends State<ClassTableView> {
                   context,
                 ).colorScheme.surface.withValues(alpha: 0.75),
               )
-              .constrained(width: leftRow)
+              .constrained(width: gridMetrics.leftColumnWidth)
               .positioned(left: 0),
           ...ClassTableBreakDecoration.stripes(
             enabled: !useContinuousClassLayout,
-            left: leftRow,
-            width: size.maxWidth - leftRow,
+            left: gridMetrics.leftColumnWidth,
+            width: size.maxWidth - gridMetrics.leftColumnWidth,
             blockHeight: blockheight,
             periodSpanBlocks: _periodSpanBlocks,
             breakSpanBlocks: _breakSpanBlocks,
@@ -292,6 +319,7 @@ class _ClassTableViewState extends State<ClassTableView> {
         firstDay: classTableState.startDay
             .add(Duration(days: 7 * classTableState.offset))
             .add(Duration(days: 7 * widget.index)),
+        metrics: gridMetrics,
       ),
       (isGxuMode ? table : table.scrollable()).expanded(),
     ].toColumn();

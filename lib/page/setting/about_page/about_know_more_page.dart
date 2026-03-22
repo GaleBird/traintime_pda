@@ -24,8 +24,6 @@ class AboutKnowMorePage extends StatelessWidget {
             children: [
               const ForkHeroCard(),
               const SizedBox(height: 16),
-              const ProjectContributionCard(),
-              const SizedBox(height: 16),
               ProjectLinksCard(links: _buildLinks(context)),
               const SizedBox(height: 16),
               const ProjectNoticeCard(),
@@ -38,11 +36,6 @@ class AboutKnowMorePage extends StatelessWidget {
 
   List<Link> _buildLinks(BuildContext context) {
     return [
-      Link(
-        icon: const Icon(Icons.home),
-        name: FlutterI18n.translate(context, "setting.about_page.homepage"),
-        url: ForkInfo.maintainerUrl,
-      ),
       Link(
         icon: const Icon(Icons.code),
         name: FlutterI18n.translate(context, "setting.about_page.code"),

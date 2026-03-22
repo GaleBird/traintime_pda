@@ -11,6 +11,7 @@ import 'package:watermeter/page/homepage/main_page_card.dart';
 import 'package:watermeter/page/public_widget/context_extension.dart';
 import 'package:watermeter/page/schoolnet/gxu_network_formatter.dart';
 import 'package:watermeter/page/schoolnet/network_card_window.dart';
+import 'package:watermeter/repository/gxu_ids/gxu_schoolnet_credentials.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_network_session.dart';
 import 'package:watermeter/repository/network_session.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
@@ -166,10 +167,10 @@ class _GxuSchoolnetCard extends StatelessWidget {
 
   String _buildCachedBottomText(BuildContext context, GxuNetworkUsage usage) {
     final age = formatGxuRefreshAge(context, usage.refreshedAt);
-    if (gxuNetworkError.value == "school_net.empty_password") {
+    if (isGxuSchoolnetCredentialError(gxuNetworkError.value)) {
       return FlutterI18n.translate(
         context,
-        "homepage.school_net.cache_need_password",
+        "homepage.school_net.cache_need_credentials",
         translationParams: {"age": age},
       );
     }

@@ -14,6 +14,14 @@ class GxuNetworkNoticeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final foreground = Colors.orange[900]!;
+    final cacheHint = FlutterI18n.translate(
+      context,
+      "school_net.gxu.cache_hint_compact",
+    );
+    final httpWarning = FlutterI18n.translate(
+      context,
+      "school_net.gxu.http_warning",
+    );
     return [
           Icon(
             Icons.info_outline,
@@ -22,10 +30,7 @@ class GxuNetworkNoticeCard extends StatelessWidget {
           ).padding(right: 8),
           Expanded(
             child: Text(
-              FlutterI18n.translate(
-                context,
-                "school_net.gxu.cache_hint_compact",
-              ),
+              '$cacheHint\n$httpWarning',
               style: TextStyle(fontSize: 12.5, color: foreground, height: 1.35),
             ),
           ),
@@ -87,25 +92,27 @@ class GxuNetworkNoCacheCard extends StatelessWidget {
 
 class GxuNetworkStatusBanner extends StatelessWidget {
   final String errorText;
-  final bool isPasswordError;
+  final bool isCredentialError;
 
   const GxuNetworkStatusBanner({
     super.key,
     required this.errorText,
-    required this.isPasswordError,
+    required this.isCredentialError,
   });
 
   @override
   Widget build(BuildContext context) {
-    final titleKey = isPasswordError
-        ? "school_net.gxu.cache_need_password"
+    final titleKey = isCredentialError
+        ? "school_net.gxu.cache_need_credentials"
         : "school_net.gxu.cache_refresh_failed";
-    final background = isPasswordError ? Colors.amber[50] : Colors.red[50];
-    final border = isPasswordError ? Colors.amber[200]! : Colors.red[200]!;
-    final foreground = isPasswordError ? Colors.amber[900] : Colors.red[900];
+    final background = isCredentialError ? Colors.amber[50] : Colors.red[50];
+    final border = isCredentialError ? Colors.amber[200]! : Colors.red[200]!;
+    final foreground = isCredentialError ? Colors.amber[900] : Colors.red[900];
     return [
           Icon(
-            isPasswordError ? Icons.info_outline : Icons.warning_amber_rounded,
+            isCredentialError
+                ? Icons.info_outline
+                : Icons.warning_amber_rounded,
             color: foreground,
           ).padding(right: 10),
           Expanded(
@@ -117,7 +124,7 @@ class GxuNetworkStatusBanner extends StatelessWidget {
                   color: foreground,
                 ),
               ),
-              if (!isPasswordError)
+              if (!isCredentialError)
                 Text(
                   errorText,
                   style: TextStyle(color: foreground, height: 1.35),

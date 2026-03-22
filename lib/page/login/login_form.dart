@@ -18,6 +18,7 @@ import 'package:watermeter/page/login/sms_login_panel.dart';
 import 'package:watermeter/page/public_widget/toast.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_ca_session.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_classtable_session.dart';
+import 'package:watermeter/repository/gxu_ids/gxu_schoolnet_credentials.dart';
 import 'package:watermeter/repository/auth_exceptions.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
@@ -81,6 +82,10 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   Future<void> _openForgotPassword() async {
+    final shouldOpen = await _confirmForgotPasswordOpen();
+    if (shouldOpen != true || !mounted) {
+      return;
+    }
     try {
       final opened = await launchUrl(
         Uri.parse(_gxuForgotPasswordUrl),
@@ -104,6 +109,31 @@ class _LoginFormState extends State<LoginForm> {
         ),
       );
     }
+  }
+
+  Future<bool?> _confirmForgotPasswordOpen() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(FlutterI18n.translate(context, "login.forgot_password")),
+        content: Text(
+          FlutterI18n.translate(
+            context,
+            "login.forgot_password_security_warning",
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(FlutterI18n.translate(context, "cancel")),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(FlutterI18n.translate(context, "confirm")),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _submitLoginFromKeyboard() async {
@@ -188,10 +218,7 @@ class _LoginFormState extends State<LoginForm> {
     );
     if (!mounted) return;
 
-    await preference.setString(
-      preference.Preference.idsAccount,
-      _idsAccountController.text,
-    );
+    await syncGxuSchoolnetAccountFromPasswordLogin(_idsAccountController.text);
     await preference.setString(
       preference.Preference.idsPassword,
       _idsPasswordController.text,
@@ -209,8 +236,7 @@ class _LoginFormState extends State<LoginForm> {
           pd.update(msg: FlutterI18n.translate(context, status), value: number),
     );
     if (!mounted) return;
-    await preference.setString(preference.Preference.gxuCaPhone, phone);
-    await preference.remove(preference.Preference.idsPassword);
+    await handleGxuSmsLoginSuccess(phone);
     await _finishPostLogin(pd, classtableSession);
   }
 

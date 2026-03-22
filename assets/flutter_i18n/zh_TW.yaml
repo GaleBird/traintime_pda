@@ -403,6 +403,7 @@ homepage:
     cache_age: 刷新於 {age}
     cache_refresh_failed: 緩存 {age}，最新刷新失敗
     cache_need_password: 緩存 {age}，未設置刷新密碼
+    cache_need_credentials: 緩存 {age}，未補全校園網賬號或密碼
   club_promotion:
     failed: 社團信息獲取失敗
     fetching: 社團信息清單正在加載
@@ -477,6 +478,7 @@ login:
   failed_login_with_message: 請求失敗，報錯信息：{message}
   failed_login_other: 未知錯誤，請聯繫開發者
   failed_open_forgot_password: 無法打開找回密碼頁面
+  forgot_password_security_warning: 當前官方找回密碼入口會跳轉到非加密頁面。應用不會自動代填任何憑據；如需繼續，請僅在可信網絡環境下使用系統瀏覽器打開。
   clear_cache: 清除登錄緩存
   complete_clear_cache: 清理緩存成功
   see_inspector: 查看網絡交互
@@ -492,6 +494,7 @@ school_net:
     cached_notice: 這裡默認顯示上次成功查詢的緩存數據，不會在打開頁面時自動重新登錄。
     manual_refresh_hint: 需要最新數據時再手動刷新；如果服務端要求驗證碼，會彈出輸入框。
     cache_hint_compact: "預設顯示緩存；需要最新點刷新（可能需驗證碼）。"
+    http_warning: 注意：校園網自助系統使用 HTTP 明文傳輸，查詢密碼可能被竊聽。建議僅在可信網絡環境使用，並定期修改密碼。
     overview: 賬戶概覽
     traffic: 流量信息
     account: 賬號
@@ -501,12 +504,13 @@ school_net:
     available: 可用流量
     protection: 消費保護
     balance: 賬戶餘額
-    account_missing: 缺少廣西大學賬號，請重新登錄應用
+    account_missing: 缺少校園網查詢賬號，請補充後重試
     page_changed: 廣西大學網絡頁面結構已變化，暫時無法解析
     login_failed: 廣西大學網絡系統登錄失敗
     no_cache_title: 暫無網絡緩存
     no_cache_body: 首次使用請手動刷新一次，之後主頁會優先顯示最近一次成功獲取的數據。
     cache_need_password: 當前顯示緩存數據，未設置查詢密碼，暫時無法刷新最新數據。
+    cache_need_credentials: 當前顯示緩存數據，校園網賬號或密碼未補全，暫時無法刷新最新數據。
     cache_refresh_failed: 當前顯示緩存數據，最近一次刷新失敗。
     refresh_just_now: 剛剛
     refresh_minutes: '{minutes} 分鐘前'
@@ -544,7 +548,7 @@ school_net:
     time: 上線時間
     remain: 流量用量
   fetching: 正在獲取校園網信息
-  empty_password: 您忘記輸入賬號密碼了
+  empty_password: 缺少校園網查詢密碼，請補充後重試
   not_initalized: 疑似查詢後端尚未開放查詢
   captcha_failed: 驗證碼識別失敗
   wrong_password: 密碼錯誤
@@ -666,7 +670,7 @@ setting:
   about_this_program: 關於本程序
   version: 版本號：{version}
   user_info: 用戶信息
-  header_subtitle: '{maintainer} 維護版 · 基於 Traintime PDA / XDYou 持續維護'
+  header_subtitle: '基於 Traintime PDA / XDYou 的 GXU 版本'
   check_update: 檢查軟件更新
   latest_version: '最新版本: {latest}'
   waiting: 等待獲取
@@ -860,6 +864,11 @@ setting:
     input_hint: 請在此輸入密碼
     blank_input: 輸入空白!
   change_schoolnet_password_title: 修改校園網查詢帳號密碼
+  change_schoolnet_dialog:
+    account_hint: 請在此輸入校園網查詢賬號
+    password_hint: 請在此輸入校園網查詢密碼
+    account_required: 請輸入校園網查詢賬號
+    password_required: 請輸入校園網查詢密碼
   update_dialog:
       new_version: 新版本發佈
       not_now: 暫不更新
@@ -921,9 +930,15 @@ setting:
     code: 目前倉庫
     upstream_code: 上游倉庫
     upstream_acknowledgement_subtitle: 目前 GXU 版本基於上游開源專案 Traintime PDA / XDYou 持續維護，感謝原開發團隊與歷屆貢獻者提供的功能基礎、歷史積累與開源代碼。
-    know_more_subtitle: 查看維護者、專案來源與開源授權
+    know_more_subtitle: 查看專案來源與開源授權
     project_links: 專案與授權
     project_notice: 專案說明
+    project_origin_title: 專案來源
+    project_origin_summary: GXU研課表基於上游開源專案 Traintime PDA / XDYou 演進而來，圍繞廣西大學研究生常用的課表、成績與校園資訊查詢場景做了適配與整理。
+    project_origin_thanks: 感謝上游開發團隊與歷屆貢獻者提供的功能基礎、歷史積累與開源代碼。
+    origin_badge: 專案來源
+    origin_line: GXU研課表 · 面向廣西大學研究生
+    origin_description: 基於 Traintime PDA / XDYou 持續演進，聚焦廣西大學研究生的日常查詢場景。
     project_contribution_title: 目前版本貢獻
     fork_maintainer_badge: 目前維護者
     fork_maintainer_project_line: GXU研課表 · 面向廣西大學研究生 · 基於 Traintime PDA / XDYou
@@ -937,7 +952,7 @@ setting:
     legal_origin: 本專案基於 traintime_pda 開源專案繼續開發。
     legal_license: 目前分支源碼繼續遵循 Mozilla Public License v2.0 授權。
     legal_independence: 本專案為非官方第三方應用，目前 GXU 分支面向廣西大學研究生場景做功能適配與介面調整。
-    legal_upstream_notice: 上游專案 Traintime PDA / XDYou 的原作者與貢獻者提供了基礎能力與開源代碼基礎，{maintainer} 負責目前 GXU 版本的持續維護與發布。
+    legal_upstream_notice: 上游專案 Traintime PDA / XDYou 的原作者與貢獻者提供了功能基礎、歷史積累與開源代碼。
     open_source_license: 開源授權
     open_source_license_subtitle: 查看 Flutter 與第三方依賴的授權條款
     icon_page:
@@ -958,13 +973,11 @@ setting:
       shapes: 圖標形態
       shape_ios: iOS
       shape_android: Android
-    know_more: 知道更多
+    know_more: 專案來源
     copyright_notice: '本軟件拷貝基於 traintime_pda 代碼（或稱 watermeter 代碼）編譯或修改，代碼按照 Mozilla
       Public License, v. 2.0 授權。
 
       本專案為非官方第三方應用，與廣西大學及上游專案提及的相關機構或服務無官方關聯。
-
-      目前 GXU 版本維護者：{maintainer}。
 
 
       Copyright 2023-2025 BenderBlog Rodriguez and contributors.

@@ -157,7 +157,7 @@ class _InnerCard extends StatelessWidget {
 
 class _CardContent extends StatelessWidget {
   static const double _gap = 2;
-  static const double _nameMinFontPhone = 8.4;
+  static const double _nameMinFontPhone = 8.5;
   static const double _nameMinFontTablet = 10.0;
 
   final MaterialColor color;
@@ -194,6 +194,7 @@ class _CardContent extends StatelessWidget {
       builder: (context, constraints) {
         final layout = resolveClassCardLayout(
           isPhoneLayout: isPhoneLayout,
+          width: constraints.maxWidth,
           height: constraints.maxHeight,
           hasTeacher: teacherLabel.trim().isNotEmpty,
         );
@@ -212,7 +213,7 @@ class _CardContent extends StatelessWidget {
               minFontSize: isPhoneLayout
                   ? _nameMinFontPhone
                   : _nameMinFontTablet,
-              stepGranularity: 0.1,
+              stepGranularity: classCardTextStepGranularity,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: _gap),

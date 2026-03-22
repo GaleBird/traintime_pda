@@ -62,6 +62,7 @@ class ClassOrgainzedData {
         color: color,
         name: name,
         place: timeArrangement.classroom,
+        teacher: timeArrangement.teacher,
       );
     }
 

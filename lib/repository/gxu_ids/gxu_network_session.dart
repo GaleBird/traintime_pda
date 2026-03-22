@@ -10,6 +10,7 @@ import 'package:get/get.dart' hide Response;
 import 'package:watermeter/model/gxu_ids/gxu_network_usage.dart';
 import 'package:watermeter/page/public_widget/captcha_input_dialog.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_network_cache.dart';
+import 'package:watermeter/repository/gxu_ids/gxu_schoolnet_credentials.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_network_parser.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart';
@@ -92,7 +93,7 @@ class GxuNetworkSession {
       return;
     }
 
-    final username = prefs.getString(prefs.Preference.idsAccount);
+    final username = getGxuSchoolnetAccount();
     if (username.isEmpty) {
       _setError("school_net.gxu.account_missing", hasCache: hasCache);
       gxuNetworkRefreshing.value = false;

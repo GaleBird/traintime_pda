@@ -16,6 +16,7 @@ import 'package:watermeter/repository/logger.dart';
 import 'package:get/get.dart';
 import 'package:watermeter/repository/network_session.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
+import 'package:watermeter/repository/security/secure_file_store.dart';
 import 'package:watermeter/repository/xidian_ids/sysj_session.dart';
 
 enum ExperimentStatus { cache, fetching, fetched, error, none }
@@ -35,6 +36,8 @@ class ExperimentController extends GetxController {
 
   late File physicsCacheFile;
   late File otherCacheFile;
+  late SecureFileStore _physicsCacheStore;
+  late SecureFileStore _otherCacheStore;
 
   List<HomeArrangement> getExperimentOfDay(DateTime now) {
     List<HomeArrangement> toReturn = [];
@@ -133,6 +136,10 @@ class ExperimentController extends GetxController {
     );
 
     physicsCacheFile = File("${supportPath.path}/$physicsCacheName");
+    _physicsCacheStore = SecureFileStore(
+      file: physicsCacheFile,
+      namespace: 'experiment',
+    );
     bool isExist = physicsCacheFile.existsSync();
     if (isExist) {
       log.info(
@@ -141,7 +148,7 @@ class ExperimentController extends GetxController {
       );
       try {
         List<dynamic> toDecode = jsonDecode(
-          physicsCacheFile.readAsStringSync(),
+          _physicsCacheStore.readAsStringSync()!,
         );
         var physicsData = List<ExperimentData>.generate(
           toDecode.length,
@@ -179,6 +186,10 @@ class ExperimentController extends GetxController {
     }
 
     otherCacheFile = File("${supportPath.path}/$otherCacheName");
+    _otherCacheStore = SecureFileStore(
+      file: otherCacheFile,
+      namespace: 'experiment',
+    );
     isExist = otherCacheFile.existsSync();
     if (isExist) {
       log.info(
@@ -186,7 +197,9 @@ class ExperimentController extends GetxController {
         "Init other experiment from cache.",
       );
       try {
-        List<dynamic> toDecode = jsonDecode(otherCacheFile.readAsStringSync());
+        List<dynamic> toDecode = jsonDecode(
+          _otherCacheStore.readAsStringSync()!,
+        );
         var otherData = List<ExperimentData>.generate(
           toDecode.length,
           (index) => ExperimentData.fromJson(toDecode[index]),
@@ -251,7 +264,7 @@ class ExperimentController extends GetxController {
           );
           try {
             List<dynamic> toDecode = jsonDecode(
-              physicsCacheFile.readAsStringSync(),
+              _physicsCacheStore.readAsStringSync()!,
             );
             var physicsData = List<ExperimentData>.generate(
               toDecode.length,
@@ -321,7 +334,7 @@ class ExperimentController extends GetxController {
           "[ExperimentController][getPhysicsExperiment] "
           "Store to cache.",
         );
-        physicsCacheFile.writeAsStringSync(jsonEncode(toReturn));
+        _physicsCacheStore.writeAsStringSync(jsonEncode(toReturn));
         if (Platform.isIOS) {
           final api = SaveToGroupIdSwiftApi();
           try {
@@ -373,7 +386,7 @@ class ExperimentController extends GetxController {
           );
           try {
             List<dynamic> toDecode = jsonDecode(
-              otherCacheFile.readAsStringSync(),
+              _otherCacheStore.readAsStringSync()!,
             );
             var otherData = List<ExperimentData>.generate(
               toDecode.length,
@@ -442,7 +455,7 @@ class ExperimentController extends GetxController {
           "[ExperimentController][getOtherExperiment] "
           "Store to cache.",
         );
-        otherCacheFile.writeAsStringSync(jsonEncode(toReturn));
+        _otherCacheStore.writeAsStringSync(jsonEncode(toReturn));
         if (Platform.isIOS) {
           final api = SaveToGroupIdSwiftApi();
           try {

@@ -9,6 +9,7 @@ import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:watermeter/page/public_widget/app_icon.dart';
+import 'package:watermeter/page/public_widget/gxu_wordmark.dart';
 import 'package:watermeter/page/public_widget/re_x_card.dart';
 
 class AppIconPage extends StatelessWidget {
@@ -73,7 +74,6 @@ class _GxuPalette {
 }
 
 class _IconHero extends StatelessWidget {
-  static const String _gxuWordmark = 'assets/gxu_name.svg';
   static const int _patternSeed = 12;
   static const double _bgMix = 0.42;
 
@@ -127,8 +127,8 @@ class _IconHero extends StatelessWidget {
                   opacity: _Layout.watermarkOpacity,
                   child: SizedBox(
                     width: _Layout.watermarkWidth,
-                    child: SvgPicture.asset(
-                      _gxuWordmark,
+                    child: GxuWordmark(
+                      width: _Layout.watermarkWidth,
                       colorFilter: ColorFilter.mode(
                         colorScheme.onSurface,
                         BlendMode.srcIn,

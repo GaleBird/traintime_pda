@@ -38,7 +38,6 @@ import 'package:watermeter/page/setting/about_page/about_page.dart';
 import 'package:watermeter/page/setting/dialogs/experiment_password_dialog.dart';
 import 'package:watermeter/repository/pda_service_session.dart';
 import 'package:watermeter/repository/pick_file.dart';
-import 'package:watermeter/repository/fork_info.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
 import 'package:watermeter/page/setting/dialogs/electricity_password_dialog.dart';
 import 'package:watermeter/page/setting/dialogs/sport_password_dialog.dart';
@@ -137,7 +136,7 @@ class _SettingWindowState extends State<SettingWindow> {
                 ),
                 TextSpan(
                   text:
-                      '\n${FlutterI18n.translate(context, "setting.header_subtitle", translationParams: {"maintainer": ForkInfo.maintainer})}',
+                      '\n${FlutterI18n.translate(context, "setting.header_subtitle")}',
                 ),
               ],
             ),

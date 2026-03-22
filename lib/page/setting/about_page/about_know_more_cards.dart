@@ -6,7 +6,6 @@ import 'package:watermeter/page/public_widget/re_x_card.dart';
 import 'package:watermeter/page/setting/about_page/about_know_more_rows.dart';
 import 'package:watermeter/page/setting/about_page/link_widget.dart';
 import 'package:watermeter/repository/app_brand.dart';
-import 'package:watermeter/repository/fork_info.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
 
 class ForkHeroCard extends StatelessWidget {
@@ -47,44 +46,6 @@ class ForkHeroCard extends StatelessWidget {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class ProjectContributionCard extends StatelessWidget {
-  const ProjectContributionCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ReXCard(
-      title: Text(
-        FlutterI18n.translate(
-          context,
-          "setting.about_page.project_contribution_title",
-        ),
-      ).padding(bottom: 8).center(),
-      remaining: const [],
-      bottomRow: const Column(
-        children: [
-          ContributionRow(
-            icon: Icons.school_rounded,
-            titleKey: "setting.about_page.contribution_integration_title",
-            bodyKey: "setting.about_page.contribution_integration_body",
-          ),
-          Divider(height: 24),
-          ContributionRow(
-            icon: Icons.palette_outlined,
-            titleKey: "setting.about_page.contribution_brand_title",
-            bodyKey: "setting.about_page.contribution_brand_body",
-          ),
-          Divider(height: 24),
-          ContributionRow(
-            icon: Icons.build_circle_outlined,
-            titleKey: "setting.about_page.contribution_maintenance_title",
-            bodyKey: "setting.about_page.contribution_maintenance_body",
-          ),
-        ],
       ),
     );
   }
@@ -134,7 +95,6 @@ class ProjectLinksCard extends StatelessWidget {
                 applicationLegalese: FlutterI18n.translate(
                   context,
                   "setting.about_page.copyright_notice",
-                  translationParams: {"maintainer": ForkInfo.maintainer},
                 ),
               ),
             ),
@@ -164,10 +124,7 @@ class ProjectNoticeCard extends StatelessWidget {
           const SizedBox(height: 12),
           const NoticeRow(textKey: "setting.about_page.legal_independence"),
           const SizedBox(height: 12),
-          NoticeRow(
-            textKey: "setting.about_page.legal_upstream_notice",
-            translationParams: {"maintainer": ForkInfo.maintainer},
-          ),
+          const NoticeRow(textKey: "setting.about_page.legal_upstream_notice"),
         ],
       ),
     );
@@ -192,10 +149,7 @@ class _ForkHeroText extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            FlutterI18n.translate(
-              context,
-              "setting.about_page.fork_maintainer_badge",
-            ),
+            FlutterI18n.translate(context, "setting.about_page.origin_badge"),
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: scheme.primary,
               fontWeight: FontWeight.w700,
@@ -204,7 +158,7 @@ class _ForkHeroText extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          ForkInfo.maintainer,
+          AppBrand.appName,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w800,
             color: scheme.onPrimaryContainer,
@@ -212,10 +166,7 @@ class _ForkHeroText extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          FlutterI18n.translate(
-            context,
-            "setting.about_page.fork_maintainer_project_line",
-          ),
+          FlutterI18n.translate(context, "setting.about_page.origin_line"),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: scheme.onPrimaryContainer.withValues(alpha: 0.82),
             fontWeight: FontWeight.w600,
@@ -232,8 +183,7 @@ class _ForkHeroText extends StatelessWidget {
         Text(
           FlutterI18n.translate(
             context,
-            "setting.about_page.fork_maintainer_description",
-            translationParams: {"maintainer": ForkInfo.maintainer},
+            "setting.about_page.origin_description",
           ),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: scheme.onPrimaryContainer.withValues(alpha: 0.88),

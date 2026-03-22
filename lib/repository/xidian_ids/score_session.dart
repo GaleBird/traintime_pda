@@ -15,15 +15,19 @@ import 'package:watermeter/repository/preference.dart' as pref;
 import 'package:watermeter/model/xidian_ids/score.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart';
+import 'package:watermeter/repository/security/secure_file_store.dart';
 import 'package:watermeter/repository/xidian_ids/ehall_session.dart';
 
 /// 考试成绩 4768574631264620
 class ScoreSession extends EhallSession {
   static const scoreListCacheName = "scores.json";
-  static File file = File("${supportPath.path}/$scoreListCacheName");
   static bool isScoreListCacheUsed = false;
 
-  static bool get isCacheExist => file.existsSync();
+  static File get _cacheFile => File("${supportPath.path}/$scoreListCacheName");
+  static SecureFileStore get _cacheStore =>
+      SecureFileStore(file: _cacheFile, namespace: 'xidian_score');
+
+  static bool get isCacheExist => _cacheFile.existsSync();
 
   /// Must be called after [getScore]!
   /// If bug, just return dummy data.
@@ -99,7 +103,7 @@ class ScoreSession extends EhallSession {
   }
 
   void dumpScoreListCache(List<Score> scores) {
-    file.writeAsStringSync(jsonEncode(scores));
+    _cacheStore.writeAsStringSync(jsonEncode(scores));
     log.info(
       "[ScoreWindow][dumpScoreListCache] "
       "Dumped scoreList to ${supportPath.path}/$scoreListCacheName.",
@@ -238,15 +242,15 @@ class ScoreSession extends EhallSession {
       "[ScoreSession][getScore] "
       "Path at ${supportPath.path}/$scoreListCacheName.",
     );
-    if (file.existsSync() && !force) {
+    if (_cacheFile.existsSync() && !force) {
       final timeDiff = DateTime.now()
-          .difference(file.lastModifiedSync())
+          .difference(_cacheFile.lastModifiedSync())
           .inMinutes;
       log.info(
         "[ScoreSession][getScore] "
         "Cache file found.",
       );
-      cache = (jsonDecode(file.readAsStringSync()) as List<dynamic>)
+      cache = (jsonDecode(_cacheStore.readAsStringSync()!) as List<dynamic>)
           .map((s) => Score.fromJson(s as Map<String, dynamic>))
           .toList();
       if (cache.isNotEmpty && timeDiff < 15) {

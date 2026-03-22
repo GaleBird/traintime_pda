@@ -14,6 +14,7 @@ import 'package:watermeter/repository/fork_info.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/preference.dart' as pref;
 import 'package:watermeter/repository/security/update_manifest_security.dart';
+import 'package:watermeter/repository/update_install_variant.dart';
 import 'package:watermeter/repository/update_build_number.dart';
 
 enum UpdateCheckResult { available, latest, localAhead, noRelease, failed }
@@ -162,12 +163,56 @@ List<_ReleaseAsset> _parseAssets(dynamic rawAssets) {
     final json = _asJsonMap(item);
     final name = _readString(json, 'name').toLowerCase();
     final url = _readString(json, 'browser_download_url');
+    final sha256 = _readOptionalSha256(json['sha256']);
+    final size = _readOptionalPositiveInt(json['size']);
     if (name.isEmpty || url.isEmpty) {
       continue;
     }
-    assets.add(_ReleaseAsset(name: name, downloadUrl: url));
+    assets.add(
+      _ReleaseAsset(name: name, downloadUrl: url, sha256: sha256, size: size),
+    );
   }
   return assets;
+}
+
+String? _readOptionalSha256(dynamic raw) {
+  if (raw == null) {
+    return null;
+  }
+  if (raw is! String) {
+    throw const FormatException(
+      'Update manifest asset sha256 must be a string.',
+    );
+  }
+  final normalized = raw.trim().toLowerCase();
+  if (normalized.isEmpty) {
+    return null;
+  }
+  if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(normalized)) {
+    throw const FormatException('Update manifest asset sha256 is invalid.');
+  }
+  return normalized;
+}
+
+int? _readOptionalPositiveInt(dynamic raw) {
+  if (raw == null) {
+    return null;
+  }
+  int? value;
+  if (raw is int) {
+    value = raw;
+  } else if (raw is num) {
+    value = raw.toInt();
+  } else if (raw is String) {
+    value = int.tryParse(raw.trim());
+  }
+  if (value == null) {
+    throw const FormatException('Update manifest asset size is invalid.');
+  }
+  if (value <= 0) {
+    throw const FormatException('Update manifest asset size must be positive.');
+  }
+  return value;
 }
 
 Future<List<String>> _preferredAndroidAssetKeywords() async {
@@ -241,6 +286,12 @@ String _validatedAndroidDownloadUrl(String rawUrl) {
 }
 
 UpdateCheckResult _compareWithLocalVersion(String remoteCode) {
+  if (isTestingInstall(
+    packageName: pref.packageInfo.packageName,
+    version: pref.packageInfo.version,
+  )) {
+    return UpdateCheckResult.localAhead;
+  }
   final localBuild = normalizeBuildNumberForUpdateComparison(
     rawBuild: int.tryParse(pref.packageInfo.buildNumber) ?? 0,
     isAndroid: Platform.isAndroid,
@@ -284,10 +335,17 @@ int _compareVersionParts(List<int> remote, List<int> local) {
 }
 
 class _ReleaseAsset {
-  const _ReleaseAsset({required this.name, required this.downloadUrl});
+  const _ReleaseAsset({
+    required this.name,
+    required this.downloadUrl,
+    this.sha256,
+    this.size,
+  });
 
   final String name;
   final String downloadUrl;
+  final String? sha256;
+  final int? size;
 }
 
 class _AppVersion {
@@ -302,7 +360,9 @@ class _AppVersion {
   final bool hasBuildNumber;
 
   factory _AppVersion.parse(String rawVersion) {
-    final match = RegExp(r'(\d+(?:\.\d+)*)(?:\+(\d+))?').firstMatch(rawVersion);
+    final match = RegExp(
+      r'^(\d+(?:\.\d+)*)(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?(?:\+(\d+))?$',
+    ).firstMatch(rawVersion.trim());
     if (match == null) {
       throw FormatException('Unsupported version: $rawVersion');
     }

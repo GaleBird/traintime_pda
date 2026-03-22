@@ -88,6 +88,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
+        }
         release {
             signingConfig keystoreProperties['storeFile'] ? signingConfigs.release : signingConfigs.debug
         }

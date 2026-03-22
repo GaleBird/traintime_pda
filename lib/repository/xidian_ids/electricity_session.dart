@@ -16,6 +16,7 @@ import 'package:watermeter/repository/logger.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:watermeter/repository/network_session.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
+import 'package:watermeter/repository/security/secure_file_store.dart';
 import 'package:watermeter/repository/xidian_ids/ids_session.dart';
 import 'package:watermeter/repository/xidian_ids/personal_info_session.dart';
 
@@ -60,7 +61,7 @@ Future<void> update({
 
     try {
       cache = ElectricityInfo.fromJson(
-        jsonDecode(ElectricitySession.fileCache.readAsStringSync()),
+        jsonDecode(ElectricitySession.cacheStore.readAsStringSync()!),
       );
       if (double.tryParse(cache.remain) == null) {
         log.info("[EletricitySession][update] Invalid cache.");
@@ -134,10 +135,7 @@ Future<void> update({
                 }
               }),
             ]).then((value) async {
-              if (ElectricitySession.isCacheExist) {
-                await ElectricitySession.fileCache.create();
-              }
-              ElectricitySession.fileCache.writeAsStringSync(
+              ElectricitySession.cacheStore.writeAsStringSync(
                 jsonEncode(electricityInfo.value.toJson()),
               );
               if (!electricityInfo.value.remain.contains(
@@ -189,6 +187,10 @@ class ElectricitySession extends IDSSession {
   static File fileHistory = File("${supportPath.path}/$electricityHistory");
 
   static bool get isCacheExist => fileCache.existsSync();
+  static SecureFileStore get cacheStore =>
+      SecureFileStore(file: fileCache, namespace: 'xidian_electricity');
+  static SecureFileStore get historyStore =>
+      SecureFileStore(file: fileHistory, namespace: 'xidian_electricity');
 
   static const pubKey = """-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCa1ILSkh
@@ -220,7 +222,7 @@ xh5zeF9usFgtdabgACU/cQIDAQAB
     var list = <ElectricityInfo>[];
     try {
       List proto = jsonDecode(
-        ElectricitySession.fileHistory.readAsStringSync(),
+        ElectricitySession.historyStore.readAsStringSync()!,
       );
       list.clear();
       list.addAll(
@@ -244,7 +246,7 @@ xh5zeF9usFgtdabgACU/cQIDAQAB
           list.last.fetchDay.day == info.fetchDay.day &&
           list.last.remain == info.remain)) {
         list.add(info);
-        fileHistory.writeAsStringSync(jsonEncode(list));
+        historyStore.writeAsStringSync(jsonEncode(list));
       }
     }
 

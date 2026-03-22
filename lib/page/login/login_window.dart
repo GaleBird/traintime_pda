@@ -4,9 +4,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:watermeter/page/login/login_form.dart';
+import 'package:watermeter/page/public_widget/gxu_wordmark.dart';
 
 const _gxuBrandRed = Color(0xFFD73A3A);
 const _loginCardMaxWidth = 420.0;
@@ -128,10 +128,9 @@ class _LoginBrandHeader extends StatelessWidget {
       duration: _loginAnimationDuration,
       curve: Curves.easeOutCubic,
       alignment: Alignment.center,
-      child: SvgPicture.asset(
-        'assets/gxu_name.svg',
+      child: const GxuWordmark(
         width: _loginHeaderImageWidth,
-        fit: BoxFit.contain,
+        adaptToDarkTheme: true,
       ),
     );
   }

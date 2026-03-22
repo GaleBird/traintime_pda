@@ -11,9 +11,9 @@ import 'package:watermeter/page/public_widget/info_card.dart';
 import 'package:watermeter/page/public_widget/public_widget.dart';
 import 'package:watermeter/page/setting/dialogs/schoolnet_password_dialog.dart';
 import 'package:watermeter/page/schoolnet/gxu_network_panels.dart';
+import 'package:watermeter/repository/gxu_ids/gxu_schoolnet_credentials.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_network_session.dart';
 import 'package:watermeter/repository/network_session.dart';
-import 'package:watermeter/repository/preference.dart' as pref;
 
 class GxuNetworkInfo extends StatelessWidget {
   const GxuNetworkInfo({super.key});
@@ -31,9 +31,9 @@ class GxuNetworkInfo extends StatelessWidget {
     if (gxuNetworkStatus.value == SessionState.fetching) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (gxuNetworkError.value == "school_net.empty_password") {
+    if (isGxuSchoolnetCredentialError(gxuNetworkError.value)) {
       return ReloadWidget(
-        errorStatus: FlutterI18n.translate(context, gxuNetworkError.value),
+        errorStatus: _resolveMessage(context, gxuNetworkError.value),
         buttonName: FlutterI18n.translate(
           context,
           "setting.change_schoolnet_password_title",
@@ -61,8 +61,9 @@ class GxuNetworkInfo extends StatelessWidget {
           if (gxuNetworkError.value.isNotEmpty)
             GxuNetworkStatusBanner(
                   errorText: _resolveMessage(context, gxuNetworkError.value),
-                  isPasswordError:
-                      gxuNetworkError.value == "school_net.empty_password",
+                  isCredentialError: isGxuSchoolnetCredentialError(
+                    gxuNetworkError.value,
+                  ),
                 )
                 .padding(vertical: 4, horizontal: 4)
                 .width(double.infinity)
@@ -186,7 +187,7 @@ class GxuNetworkInfo extends StatelessWidget {
     if (!context.mounted) {
       return;
     }
-    if (pref.getString(pref.Preference.schoolNetQueryPassword).isNotEmpty) {
+    if (hasGxuSchoolnetCredentials()) {
       await _refresh(context);
     }
   }

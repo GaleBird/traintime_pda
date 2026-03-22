@@ -15,7 +15,6 @@ import 'package:watermeter/page/setting/setting_window/core_card.dart';
 import 'package:watermeter/page/setting/setting_window/notification_card.dart';
 import 'package:watermeter/page/setting/setting_window/ui_card.dart';
 import 'package:watermeter/repository/app_brand.dart';
-import 'package:watermeter/repository/fork_info.dart';
 
 class SettingWindow extends StatelessWidget {
   const SettingWindow({super.key});
@@ -73,7 +72,7 @@ class _SettingHeader extends StatelessWidget {
           ),
           TextSpan(
             text:
-                '\n${FlutterI18n.translate(context, "setting.header_subtitle", translationParams: {"maintainer": ForkInfo.maintainer})}',
+                '\n${FlutterI18n.translate(context, "setting.header_subtitle")}',
           ),
         ],
       ),
