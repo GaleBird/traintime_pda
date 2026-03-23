@@ -155,9 +155,11 @@ class _SettingClasstableCardState extends State<SettingClasstableCard> {
       return;
     }
 
-    File(
-      result.files.single.path!,
-    ).copySync("${supportPath.path}/${ClasstableStorage.decorationName}");
+    final decorationFile = File(
+      "${supportPath.path}/${ClasstableStorage.decorationName}",
+    );
+    File(result.files.single.path!).copySync(decorationFile.path);
+    await FileImage(decorationFile).evict();
     await preference.setBool(preference.Preference.decoration, true);
     if (!context.mounted) return;
     showToast(
