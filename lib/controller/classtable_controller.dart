@@ -112,29 +112,22 @@ class ClassTableController extends GetxController {
     classTableFile = File(
       "${supportPath.path}/${ClasstableStorage.schoolClassName}",
     );
-    final classTableFileIsExist = classTableFile.existsSync();
-    if (classTableFileIsExist && _isCacheModeMatched()) {
+    refreshUserDefinedClass();
+    final hasUsableCache = classTableFile.existsSync() && _isCacheModeMatched();
+    if (hasUsableCache) {
       log.info(
         "[ClassTableController][onInit] "
         "Init from cache.",
       );
-      refreshUserDefinedClass();
       _loadCachedClassTable();
       state = ClassTableState.fetched;
-    } else {
-      log.info(
-        "[ClassTableController][onInit] "
-        "Init from empty.",
-      );
-      classTableData = ClassTableData();
+      return;
     }
-    if (state != ClassTableState.fetched) {
-      log.info(
-        "[ClassTableController][onInit] "
-        "Init user defined file.",
-      );
-      refreshUserDefinedClass();
-    }
+    log.info(
+      "[ClassTableController][onInit] "
+      "Init from empty.",
+    );
+    classTableData = ClassTableData();
   }
 
   @override

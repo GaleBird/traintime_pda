@@ -143,10 +143,8 @@ bool _shouldShowGxuArrangement(HomeArrangement arrangement) {
       (currentTime < 19 * 60 && currentTime >= 18 * 60)) {
     inAdvance = 60;
   }
-  return List<int>.generate(
-    inAdvance,
-    (index) => index,
-  ).contains(arrangement.startTime.difference(updateTime).inMinutes);
+  final diffMinutes = arrangement.startTime.difference(updateTime).inMinutes;
+  return diffMinutes >= 0 && diffMinutes < inAdvance;
 }
 
 bool _isGxuTomorrow(DateTime time) {

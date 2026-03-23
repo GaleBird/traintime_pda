@@ -8,7 +8,6 @@ import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:timezone/data/latest.dart' as tz;
 
 import 'package:watermeter/controller/classtable_controller.dart';
 import 'package:watermeter/controller/exam_controller.dart';
@@ -20,6 +19,7 @@ import 'package:watermeter/model/xidian_ids/experiment.dart';
 import 'package:watermeter/page/classtable/class_table_view/class_organized_data.dart';
 import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/preference.dart' as preference;
+import 'package:watermeter/repository/time_zone.dart';
 import 'package:watermeter/themes/color_seed.dart';
 
 /// Use a inheritedWidget to share the ClassTableWidgetState
@@ -168,8 +168,7 @@ class ClassTableWidgetState with ChangeNotifier {
     List<Event> events = [];
 
     // UTC+8 timezone defination, hard-coded since our school is in here...
-    tz.initializeTimeZones();
-    Location currentLocation = getLocation("Asia/Shanghai");
+    final currentLocation = ensureTimeZoneInitialized();
 
     // @hgh: i here means each single course assignment
     for (var i in timeArrangement) {

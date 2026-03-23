@@ -9,8 +9,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:watermeter/repository/logger.dart';
+import 'package:watermeter/repository/time_zone.dart';
 
 /// Abstract base class for managing notifications.
 ///
@@ -47,10 +47,8 @@ abstract class NotificationService {
     if (initialized) return;
 
     try {
-      // Initialize time zone data
-      tz.initializeTimeZones();
       final effectiveTimeZone = timeZone ?? 'Asia/Shanghai';
-      tz.setLocalLocation(tz.getLocation(effectiveTimeZone));
+      ensureTimeZoneInitialized(timeZone: effectiveTimeZone);
 
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
