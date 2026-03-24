@@ -30,6 +30,14 @@ const changePageTime = 200;
 
 /// The height of the middle row.
 const midRowHeight = 54.0;
+const currentWeekHighlightAlpha = 0.30;
+const currentWeekUnselectedHighlightAlpha = 0.0;
+
+Color buildClasstableHighlightColor(BuildContext context) {
+  return Theme.of(
+    context,
+  ).highlightColor.withValues(alpha: currentWeekHighlightAlpha);
+}
 
 String getWeekString(BuildContext context, int index) {
   List<String> weekList = [

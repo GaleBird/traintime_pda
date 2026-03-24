@@ -330,58 +330,67 @@ class _LoginFormState extends State<LoginForm> {
         : _loginPortraitActionSpacing;
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         LoginMethodSwitch(
           method: _method,
           onChanged: (method) => _setLoginMethod(method),
         ),
         SizedBox(height: fieldSpacing),
-        if (_method == LoginMethod.password)
-          Column(
-            children: [
-              PasswordLoginFields(
-                accountController: _idsAccountController,
-                passwordController: _idsPasswordController,
-                accountFocusNode: _idsAccountFocusNode,
-                passwordFocusNode: _idsPasswordFocusNode,
-                obscurePassword: _couldNotView,
-                fieldSpacing: fieldSpacing,
-                onAccountEditingComplete: () =>
-                    _idsPasswordFocusNode.requestFocus(),
-                onPasswordSubmitted: _submitLoginFromKeyboard,
-                onToggleVisibility: () {
-                  setState(() {
-                    _couldNotView = !_couldNotView;
-                  });
-                },
-              ),
-              const SizedBox(height: _loginPasswordOptionsSpacing),
-              PasswordLoginOptionsRow(onForgotPassword: _openForgotPassword),
-            ],
-          )
-        else
-          SmsLoginPanel(
-            session: _session,
-            phoneController: _phoneController,
-            codeController: _smsCodeController,
-            fieldSpacing: fieldSpacing,
-            onSubmit: _submitLoginFromKeyboard,
-          ),
+        _buildMethodFields(fieldSpacing),
         SizedBox(height: actionSpacing),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(double.infinity, 56),
-            maximumSize: const Size(double.infinity, 64),
-          ),
-          onPressed: login,
-          child: Text(
-            FlutterI18n.translate(context, "login.login"),
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
-          ),
-        ),
+        _buildLoginButton(context),
         const SizedBox(height: 8.0),
         const ButtomButtons(),
       ],
     ).constrained(maxWidth: 400);
+  }
+
+  Widget _buildMethodFields(double fieldSpacing) {
+    if (_method == LoginMethod.password) {
+      return Column(
+        children: [
+          PasswordLoginFields(
+            accountController: _idsAccountController,
+            passwordController: _idsPasswordController,
+            accountFocusNode: _idsAccountFocusNode,
+            passwordFocusNode: _idsPasswordFocusNode,
+            obscurePassword: _couldNotView,
+            fieldSpacing: fieldSpacing,
+            onAccountEditingComplete: () =>
+                _idsPasswordFocusNode.requestFocus(),
+            onPasswordSubmitted: _submitLoginFromKeyboard,
+            onToggleVisibility: () {
+              setState(() {
+                _couldNotView = !_couldNotView;
+              });
+            },
+          ),
+          const SizedBox(height: _loginPasswordOptionsSpacing),
+          PasswordLoginOptionsRow(onForgotPassword: _openForgotPassword),
+        ],
+      );
+    }
+    return SmsLoginPanel(
+      session: _session,
+      phoneController: _phoneController,
+      codeController: _smsCodeController,
+      fieldSpacing: fieldSpacing,
+      onSubmit: _submitLoginFromKeyboard,
+    );
+  }
+
+  Widget _buildLoginButton(BuildContext context) {
+    return FilledButton(
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(double.infinity, 56),
+        maximumSize: const Size(double.infinity, 64),
+      ),
+      onPressed: login,
+      child: Text(
+        FlutterI18n.translate(context, "login.login"),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
+      ),
+    );
   }
 }

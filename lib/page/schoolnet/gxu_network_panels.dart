@@ -5,51 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:styled_widget/styled_widget.dart';
 import 'package:watermeter/model/gxu_ids/gxu_network_usage.dart';
+import 'package:watermeter/page/schoolnet/gxu_network_action_button.dart';
 import 'package:watermeter/page/schoolnet/gxu_network_formatter.dart';
 import 'package:watermeter/page/public_widget/public_widget.dart';
 
-class GxuNetworkNoticeCard extends StatelessWidget {
-  const GxuNetworkNoticeCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final foreground = Colors.orange[900]!;
-    final cacheHint = FlutterI18n.translate(
-      context,
-      "school_net.gxu.cache_hint_compact",
-    );
-    final httpWarning = FlutterI18n.translate(
-      context,
-      "school_net.gxu.http_warning",
-    );
-    return [
-          Icon(
-            Icons.info_outline,
-            size: 18,
-            color: foreground,
-          ).padding(right: 8),
-          Expanded(
-            child: Text(
-              '$cacheHint\n$httpWarning',
-              style: TextStyle(fontSize: 12.5, color: foreground, height: 1.35),
-            ),
-          ),
-        ]
-        .toRow(crossAxisAlignment: CrossAxisAlignment.start)
-        .padding(horizontal: 12, vertical: 10)
-        .decorated(
-          color: Colors.orange[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orange[200]!),
-        )
-        .width(double.infinity);
-  }
-}
+const gxuNetworkPortalUrl = "http://self.gxu.edu.cn";
 
 class GxuNetworkNoCacheCard extends StatelessWidget {
-  final VoidCallback onRefresh;
-
-  const GxuNetworkNoCacheCard({super.key, required this.onRefresh});
+  const GxuNetworkNoCacheCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -74,12 +37,6 @@ class GxuNetworkNoCacheCard extends StatelessWidget {
               context,
             ).textTheme.bodyMedium?.copyWith(height: 1.5),
             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: onRefresh,
-            icon: const Icon(Icons.refresh),
-            label: Text(FlutterI18n.translate(context, "school_net.refresh")),
           ),
         ]
         .toColumn(crossAxisAlignment: CrossAxisAlignment.center)
@@ -216,40 +173,67 @@ class GxuNetworkSummaryCard extends StatelessWidget {
 
 class GxuNetworkActionButtons extends StatelessWidget {
   final bool refreshing;
+  final String hintText;
   final VoidCallback onRefresh;
   final VoidCallback onChangePassword;
+  final VoidCallback onOpenPortal;
 
   const GxuNetworkActionButtons({
     super.key,
     required this.refreshing,
+    required this.hintText,
     required this.onRefresh,
     required this.onChangePassword,
+    required this.onOpenPortal,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
-      children: [
-        FilledButton.icon(
-          onPressed: refreshing ? null : onRefresh,
-          icon: const Icon(Icons.refresh),
-          label: Text(FlutterI18n.translate(context, "school_net.refresh")),
-        ),
-        OutlinedButton.icon(
-          onPressed: onChangePassword,
-          icon: const Icon(Icons.password),
-          label: Text(
-            FlutterI18n.translate(
-              context,
-              "setting.change_schoolnet_password_title",
+    return [
+      Row(
+        children: [
+          Expanded(
+            child: GxuNetworkActionButton(
+              icon: Icons.refresh,
+              label: FlutterI18n.translate(context, "school_net.refresh"),
+              onPressed: refreshing ? null : onRefresh,
+              filled: true,
             ),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: GxuNetworkActionButton(
+              icon: Icons.badge_outlined,
+              label: FlutterI18n.translate(
+                context,
+                "school_net.gxu.account_short",
+              ),
+              onPressed: onChangePassword,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: GxuNetworkActionButton(
+              icon: Icons.open_in_new,
+              label: FlutterI18n.translate(
+                context,
+                "school_net.gxu.portal_short",
+              ),
+              onPressed: onOpenPortal,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 10),
+      Text(
+        hintText,
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          height: 1.35,
         ),
-      ],
-    );
+      ),
+    ].toColumn(crossAxisAlignment: CrossAxisAlignment.stretch);
   }
 }
 

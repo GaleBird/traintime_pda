@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:get/get.dart';
 import 'package:styled_widget/styled_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:watermeter/model/gxu_ids/gxu_network_usage.dart';
 import 'package:watermeter/page/public_widget/captcha_input_dialog.dart';
 import 'package:watermeter/page/public_widget/info_card.dart';
 import 'package:watermeter/page/public_widget/public_widget.dart';
+import 'package:watermeter/page/public_widget/toast.dart';
 import 'package:watermeter/page/setting/dialogs/schoolnet_password_dialog.dart';
 import 'package:watermeter/page/schoolnet/gxu_network_panels.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_schoolnet_credentials.dart';
@@ -28,79 +30,113 @@ class GxuNetworkInfo extends StatelessWidget {
   });
 
   Widget _buildEmptyBody(BuildContext context) {
-    if (gxuNetworkStatus.value == SessionState.fetching) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (isGxuSchoolnetCredentialError(gxuNetworkError.value)) {
-      return ReloadWidget(
-        errorStatus: _resolveMessage(context, gxuNetworkError.value),
-        buttonName: FlutterI18n.translate(
-          context,
-          "setting.change_schoolnet_password_title",
+    final body = switch (gxuNetworkStatus.value) {
+      SessionState.fetching => const Center(child: CircularProgressIndicator()),
+      SessionState.error
+          when isGxuSchoolnetCredentialError(gxuNetworkError.value) =>
+        ReloadWidget(
+          errorStatus: _resolveMessage(context, gxuNetworkError.value),
+          buttonName: FlutterI18n.translate(
+            context,
+            "setting.change_schoolnet_password_title",
+          ),
+          function: () => _showPasswordDialog(context),
         ),
-        function: () => _showPasswordDialog(context),
-      );
-    }
-    if (gxuNetworkStatus.value == SessionState.error) {
-      return ReloadWidget(
+      SessionState.error => ReloadWidget(
         errorStatus: _resolveMessage(context, gxuNetworkError.value),
         function: () => _refresh(context),
-      );
-    }
-    return GxuNetworkNoCacheCard(onRefresh: () => _refresh(context));
+      ),
+      _ => const GxuNetworkNoCacheCard().padding(all: 12).scrollable(),
+    };
+    return _buildPageLayout(context, body: body, hasCache: false);
   }
 
   Widget _buildContent(BuildContext context, GxuNetworkUsage usage) {
-    return [
-          if (gxuNetworkRefreshing.value)
-            const LinearProgressIndicator()
-                .clipRRect(all: 99)
-                .padding(vertical: 2, horizontal: 4)
-                .constrained(maxWidth: sheetMaxWidth)
-                .center(),
-          if (gxuNetworkError.value.isNotEmpty)
-            GxuNetworkStatusBanner(
-                  errorText: _resolveMessage(context, gxuNetworkError.value),
-                  isCredentialError: isGxuSchoolnetCredentialError(
-                    gxuNetworkError.value,
-                  ),
-                )
-                .padding(vertical: 4, horizontal: 4)
-                .width(double.infinity)
-                .constrained(maxWidth: sheetMaxWidth)
-                .center(),
-          GxuNetworkSummaryCard(usage: usage)
-              .padding(vertical: 2, horizontal: 4)
-              .constrained(maxWidth: sheetMaxWidth)
-              .center(),
-          _buildOverviewCard(context, usage)
-              .padding(vertical: 2, horizontal: 4)
-              .constrained(maxWidth: sheetMaxWidth)
-              .center(),
-          _buildTrafficCard(context, usage)
-              .padding(vertical: 2, horizontal: 4)
-              .constrained(maxWidth: sheetMaxWidth)
-              .center(),
-          GxuNetworkActionButtons(
-                refreshing: gxuNetworkRefreshing.value,
-                onRefresh: () => _refresh(context),
-                onChangePassword: () => _showPasswordDialog(context),
+    return _buildPageLayout(
+      context,
+      body:
+          [
+                if (gxuNetworkRefreshing.value)
+                  const LinearProgressIndicator()
+                      .clipRRect(all: 99)
+                      .padding(vertical: 2, horizontal: 4)
+                      .constrained(maxWidth: sheetMaxWidth)
+                      .center(),
+                if (gxuNetworkError.value.isNotEmpty)
+                  GxuNetworkStatusBanner(
+                        errorText: _resolveMessage(
+                          context,
+                          gxuNetworkError.value,
+                        ),
+                        isCredentialError: isGxuSchoolnetCredentialError(
+                          gxuNetworkError.value,
+                        ),
+                      )
+                      .padding(vertical: 4, horizontal: 4)
+                      .width(double.infinity)
+                      .constrained(maxWidth: sheetMaxWidth)
+                      .center(),
+                GxuNetworkSummaryCard(usage: usage)
+                    .padding(vertical: 2, horizontal: 4)
+                    .constrained(maxWidth: sheetMaxWidth)
+                    .center(),
+                _buildOverviewCard(context, usage)
+                    .padding(vertical: 2, horizontal: 4)
+                    .constrained(maxWidth: sheetMaxWidth)
+                    .center(),
+                _buildTrafficCard(context, usage)
+                    .padding(vertical: 2, horizontal: 4)
+                    .constrained(maxWidth: sheetMaxWidth)
+                    .center(),
+              ]
+              .toColumn(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
               )
-              .padding(horizontal: 4, vertical: 6)
-              .width(double.infinity)
-              .constrained(maxWidth: sheetMaxWidth)
-              .center(),
-          const GxuNetworkNoticeCard()
-              .padding(horizontal: 4, vertical: 2)
-              .width(double.infinity)
-              .constrained(maxWidth: sheetMaxWidth)
-              .center(),
-        ]
-        .toColumn(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.start,
+              .scrollable(padding: const EdgeInsets.all(12)),
+      hasCache: true,
+    );
+  }
+
+  Widget _buildPageLayout(
+    BuildContext context, {
+    required Widget body,
+    required bool hasCache,
+  }) {
+    return Column(
+      children: [
+        Expanded(child: body),
+        _buildActionButtons(context, hasCache: hasCache),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context, {required bool hasCache}) {
+    final hintKey = hasCache
+        ? "school_net.gxu.cache_info_hint"
+        : "school_net.gxu.manual_refresh_hint";
+    return GxuNetworkActionButtons(
+          refreshing: gxuNetworkRefreshing.value,
+          hintText: FlutterI18n.translate(context, hintKey),
+          onRefresh: () => _refresh(context),
+          onChangePassword: () => _showPasswordDialog(context),
+          onOpenPortal: () => _openPortal(context),
         )
-        .scrollable(padding: const EdgeInsets.all(12));
+        .padding(horizontal: 16, vertical: 12)
+        .width(double.infinity)
+        .decorated(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(
+                context,
+              ).colorScheme.outlineVariant.withValues(alpha: 0.7),
+            ),
+          ),
+        )
+        .safeArea(top: false)
+        .constrained(maxWidth: sheetMaxWidth)
+        .center();
   }
 
   Widget _buildOverviewCard(BuildContext context, GxuNetworkUsage usage) {
@@ -190,6 +226,26 @@ class GxuNetworkInfo extends StatelessWidget {
     if (hasGxuSchoolnetCredentials()) {
       await _refresh(context);
     }
+  }
+
+  Future<void> _openPortal(BuildContext context) async {
+    try {
+      final opened = await launchUrl(
+        Uri.parse(gxuNetworkPortalUrl),
+        mode: LaunchMode.externalApplication,
+      );
+      if (opened || !context.mounted) {
+        return;
+      }
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+    }
+    showToast(
+      context: context,
+      msg: FlutterI18n.translate(context, "school_net.gxu.portal_open_failed"),
+    );
   }
 
   String _resolveMessage(BuildContext context, String value) {

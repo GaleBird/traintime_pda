@@ -61,9 +61,6 @@ class ClassTableDateRow extends StatelessWidget {
 class WeekInfomation extends StatelessWidget {
   static const double _weekdayLineHeight = 1.0;
   static const double _dayLineHeight = 1.0;
-  static const double _todayCellAlpha = 0.55;
-  static const double _todayBorderAlpha = 0.40;
-  static const double _todayBorderWidth = 1.0;
   static const double _todayPillAlpha = 0.18;
 
   final DateTime time;
@@ -77,16 +74,13 @@ class WeekInfomation extends StatelessWidget {
     final isToday =
         time.year == now.year && time.month == now.month && time.day == now.day;
     final scheme = Theme.of(context).colorScheme;
+    final todayHighlightColor = buildClasstableHighlightColor(context);
     return Container(
       padding: EdgeInsets.symmetric(vertical: metrics.dateCellPaddingVertical),
       decoration: isToday
           ? BoxDecoration(
-              color: scheme.primaryContainer.withValues(alpha: _todayCellAlpha),
+              color: todayHighlightColor,
               borderRadius: BorderRadius.circular(metrics.todayRadius),
-              border: Border.all(
-                color: scheme.primary.withValues(alpha: _todayBorderAlpha),
-                width: _todayBorderWidth,
-              ),
             )
           : null,
       child: Column(

@@ -24,6 +24,13 @@ Rx<SessionState> gxuNetworkStatus = SessionState.none.obs;
 final gxuNetworkRefreshing = false.obs;
 final gxuNetworkError = "".obs;
 
+void resetGxuNetworkRuntimeState() {
+  gxuNetworkInfo.value = null;
+  gxuNetworkStatus.value = SessionState.none;
+  gxuNetworkRefreshing.value = false;
+  gxuNetworkError.value = "";
+}
+
 Future<void> loadCachedGxuNetworkUsage() async {
   final usage = await loadGxuNetworkUsageCache();
   if (usage == null) {

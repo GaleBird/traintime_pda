@@ -42,8 +42,6 @@ import 'package:watermeter/repository/preference.dart' as preference;
 import 'package:watermeter/page/setting/dialogs/electricity_password_dialog.dart';
 import 'package:watermeter/page/setting/dialogs/sport_password_dialog.dart';
 import 'package:watermeter/page/setting/dialogs/change_swift_dialog.dart';
-import 'package:watermeter/repository/gxu_ids/gxu_score_session.dart';
-import 'package:watermeter/repository/gxu_ids/gxu_course_selection_session.dart';
 import 'package:watermeter/repository/network_session.dart';
 import 'package:watermeter/repository/xidian_ids/classtable_session.dart';
 import 'package:watermeter/repository/xidian_ids/electricity_session.dart'
@@ -879,36 +877,70 @@ class _SettingWindowState extends State<SettingWindow> {
                         ),
                         TextButton(
                           onPressed: () async {
+                            Navigator.pop(context);
                             ProgressDialog pd = ProgressDialog(
-                              context: context,
+                              context: this.context,
                             );
                             pd.show(
                               msg: FlutterI18n.translate(
-                                context,
+                                this.context,
                                 "setting.clear_and_restart_dialog.cleaning",
                               ),
                             );
+                            late final CookieClearResult cookieResult;
                             try {
-                              await clearAllCookies();
-                            } on PathNotFoundException {
-                              log.debug(
-                                "[setting][ClearAllCache]"
-                                "No cookies.",
-                              );
+                              cookieResult = await clearAllCookies();
+                              _removeCache();
+                            } finally {
+                              if (mounted && pd.isOpen()) {
+                                pd.close();
+                              }
                             }
-
-                            /// Clean cache.
-                            _removeCache();
-                            if (context.mounted) {
+                            if (!mounted) return;
+                            if (cookieResult.hasFailures) {
+                              await showDialog<void>(
+                                context: this.context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: Text(
+                                    FlutterI18n.translate(
+                                      dialogContext,
+                                      "setting.cookie_cleanup_partial_title",
+                                    ),
+                                  ),
+                                  content: Text(
+                                    FlutterI18n.translate(
+                                      dialogContext,
+                                      "setting.clear_and_restart_dialog.cookie_partial",
+                                      translationParams: {
+                                        "details": cookieResult.summary(),
+                                      },
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext),
+                                      child: Text(
+                                        FlutterI18n.translate(
+                                          dialogContext,
+                                          "confirm",
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (!mounted) return;
+                            } else {
                               showToast(
-                                context: context,
+                                context: this.context,
                                 msg: FlutterI18n.translate(
-                                  context,
+                                  this.context,
                                   "setting.clear_and_restart_dialog.clear",
                                 ),
                               );
-                              restart();
                             }
+                            restart();
                           },
                           child: Text(
                             FlutterI18n.translate(context, "confirm"),
@@ -952,40 +984,67 @@ class _SettingWindowState extends State<SettingWindow> {
                         ),
                         TextButton(
                           onPressed: () async {
+                            Navigator.pop(context);
                             ProgressDialog pd = ProgressDialog(
-                              context: context,
+                              context: this.context,
                             );
                             pd.show(
                               msg: FlutterI18n.translate(
-                                context,
+                                this.context,
                                 "setting.logout_dialog.logging_out",
                               ),
                             );
-
-                            /// Clean Cookie
+                            late final CookieClearResult cookieResult;
                             try {
-                              await clearAllCookies();
-                              // I don't care.
-                              // ignore: empty_catches
-                            } on Exception {}
-
-                            /// Clean all.
-                            _removeAll();
-
-                            /// Clean user information
-                            await preference.prefrenceClear();
-
-                            /// Theme back to default
-                            ThemeController toChange = Get.put(
-                              ThemeController(),
-                            );
-                            toChange.updateTheme();
-
-                            /// Restart app
-                            if (mounted) {
-                              pd.close();
-                              restart();
+                              cookieResult = await clearAllCookies();
+                              _removeAll();
+                              await preference.prefrenceClear();
+                              ThemeController toChange = Get.put(
+                                ThemeController(),
+                              );
+                              toChange.updateTheme();
+                            } finally {
+                              if (mounted && pd.isOpen()) {
+                                pd.close();
+                              }
                             }
+                            if (!mounted) return;
+                            if (cookieResult.hasFailures) {
+                              await showDialog<void>(
+                                context: this.context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: Text(
+                                    FlutterI18n.translate(
+                                      dialogContext,
+                                      "setting.cookie_cleanup_partial_title",
+                                    ),
+                                  ),
+                                  content: Text(
+                                    FlutterI18n.translate(
+                                      dialogContext,
+                                      "setting.logout_dialog.cookie_partial",
+                                      translationParams: {
+                                        "details": cookieResult.summary(),
+                                      },
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext),
+                                      child: Text(
+                                        FlutterI18n.translate(
+                                          dialogContext,
+                                          "confirm",
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (!mounted) return;
+                            }
+                            restart();
                           },
                           child: Text(
                             FlutterI18n.translate(context, "confirm"),
@@ -1005,15 +1064,12 @@ class _SettingWindowState extends State<SettingWindow> {
 }
 
 void _removeCache() {
+  removeCacheFiles();
   for (var value in [
-    ClassTableFile.schoolClassName,
     ExamController.examDataCacheName,
     ExperimentController.physicsCacheName,
     ExperimentController.otherCacheName,
     ScoreSession.scoreListCacheName,
-    GxuScoreSession.scoreListCacheName,
-    GxuCourseSelectionSession.courseSelectionCacheName,
-    gxuNetworkCacheName,
     electricity_session.ElectricitySession.electricityCache,
     electricity_session.ElectricitySession.electricityHistory,
   ]) {
@@ -1025,17 +1081,12 @@ void _removeCache() {
 }
 
 void _removeAll() {
+  removeAllFiles();
   for (var value in [
-    ClassTableFile.schoolClassName,
-    ClassTableFile.userDefinedClassName,
-    ClassTableFile.decorationName,
     ExamController.examDataCacheName,
     ExperimentController.physicsCacheName,
     ExperimentController.otherCacheName,
     ScoreSession.scoreListCacheName,
-    GxuScoreSession.scoreListCacheName,
-    GxuCourseSelectionSession.courseSelectionCacheName,
-    gxuNetworkCacheName,
     electricity_session.ElectricitySession.electricityCache,
     electricity_session.ElectricitySession.electricityHistory,
   ]) {

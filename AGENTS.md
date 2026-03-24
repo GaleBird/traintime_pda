@@ -86,6 +86,12 @@ Build examples:
 - GXU homepage schoolnet card now summarizes used traffic in `GB` and shows relative cache age; the GXU detail page should keep showing cached data plus refresh-status hints even if a later refresh fails.
 - GXU network detail refresh must release `gxuNetworkRefreshing` even on early exits such as missing query password or missing account, otherwise the refresh button stays disabled until app restart after the user fixes the input.
 - GXU dashboard parsing is label-based around `下次结算 / 已用流量 / 免费流量 / 可用流量 / 消费保护 / 账户余额`; if those labels disappear, surface an explicit page-structure error instead of silently faking data.
+- GXU 校园网详情页底部不再显示原来的注意提示卡或独立官网说明卡；操作区固定为单行三按钮（刷新 / 账号 / 官网），按钮采用“图标在上、文字在下”的紧凑布局以兼容小屏和大字体，按钮下方补充一行“当前为缓存信息、需手动刷新”的说明，并用系统浏览器跳转到 `http://self.gxu.edu.cn` 查看尚未接入的功能。
+- GXU 校园网详情页的底部操作区在无缓存、首次进入、首次刷新失败、缺少账号/密码等空状态下也必须继续显示；不要再把 `刷新 / 账号 / 官网` 入口只挂在“已有缓存内容”的分支里。
+- GXU 校园网无缓存空态卡片应保持纯说明用途，不要再在卡片内部重复放一个“刷新”按钮；空态正文需要可滚动，避免固定底部操作区出现后在短屏/分屏/大字号下把说明卡挤出或裁掉。
+- 设置页执行“清除缓存并重启”或“退出登录”时，除删除 `GxuNetworkUsage.json` 外，还要同步重置 `gxuNetworkInfo / gxuNetworkStatus / gxuNetworkRefreshing / gxuNetworkError`，避免重启前后或非重启路径短暂显示旧校园网缓存状态。
+- 设置页执行“清除缓存并重启”或“退出登录”时，Cookie 清理失败不能静默吞掉，但也不能提前中断本地缓存/偏好清理；应先完成本地清理，再显式提示 Cookie 异常，并保证确认弹窗先关闭、进度框在 `finally` 里收起，避免桌面端/重启失败时留下叠层弹窗。
+- GXU 课表日期行里“今天”的高亮底色应与顶部周次条当前选中周次使用同一套 `highlightColor` 背景，不要再单独使用另一种 `primaryContainer` 色块。
 - GXU homepage current/next-course logic must not switch to "tomorrow" before 22:05, because GXU晚课会持续到第 13 节结束。
 - GXU classtable top week row ("第x周") uses compact height (56) on tall screens to avoid squeezing period time labels.
 - GXU classtable top week row responsive breakpoints must use the actual classtable body viewport height after the AppBar, not `MediaQuery` full-route height; common ~640dp body heights on mainstream phones should fall into the compact week-row tier.
@@ -108,6 +114,7 @@ Build examples:
 - The GXU score archive card should stay compact: keep the identity block compressed to a few lines, place summary metrics in a tight right-side/two-row panel, and avoid reintroducing a tall hero card that pushes the course list below the fold on phone screens.
 - GXU native score page should preserve the old "selected courses for calculation" workflow: use a calculate FAB to enter selection mode, let score cards toggle selection in that mode, and show the selected-course credit/average/GPA summary in a bottom bar instead of dropping that capability from the GXU implementation.
 - GXU native score data comes from the transcript-preview flow, not the generic template list. The fetch order is `/yjs/py/kcpj/loadJxzlpj` -> `/yjs/py/cjgl/cjdpldy/checkdDycjd` -> `/yjs/py/cjgl/cjdpldy/getCjddyyl`, and the cache file name is `gxu_scores.json`, which settings cache-clearing must also delete.
+- GXU 成绩查询在重新登录或清缓存后的首次进入也要稳定：先打开成绩模板页 `/cp/templateList/p/up_016_014` 预热模块，再走 `loadJxzlpj -> checkdDycjd -> getCjddyyl`；若 `loadJxzlpj` 首次返回未就绪，允许带日志地重试一次同样的预热流程，不能再把这种瞬时初始化失败直接暴露给用户。
 - App startup bootstrap should stay minimal: keep support-path / preferences / forced GXU mode / package info before `runApp`, but defer cache warmup and notification-service initialization until after the first frame so the native splash is not stretched by non-critical async work.
 - Android local size comparisons must use `release` artifacts, ideally `.flutter/bin/flutter build apk --release --split-per-abi`; `build/app/outputs/flutter-apk/app-debug.apk` is a fat debug package and can be around 242 MB because it includes `kernel_blob.bin`, all ABIs, and debug native libraries.
 - `pubspec.yaml` 的 `version` 可保持 GXU 品牌语义版本（如 `1.0.0`），但 `+build` 必须单调递增（当前基线至少 `+41`），否则同包名安装会因 versionCode/build number 回退而覆盖失败。

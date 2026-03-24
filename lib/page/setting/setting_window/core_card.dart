@@ -72,46 +72,30 @@ class SettingCoreCard extends StatelessWidget {
   void _showClearCacheDialog(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(
           FlutterI18n.translate(
-            context,
+            dialogContext,
             "setting.clear_and_restart_dialog.title",
           ),
         ),
         content: Text(
           FlutterI18n.translate(
-            context,
+            dialogContext,
             "setting.clear_and_restart_dialog.content",
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(FlutterI18n.translate(context, "cancel")),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(FlutterI18n.translate(dialogContext, "cancel")),
           ),
           TextButton(
             onPressed: () async {
-              final pd = ProgressDialog(context: context);
-              pd.show(
-                msg: FlutterI18n.translate(
-                  context,
-                  "setting.clear_and_restart_dialog.cleaning",
-                ),
-              );
-              await clearAllCookies();
-              removeCacheFiles();
-              if (!context.mounted) return;
-              showToast(
-                context: context,
-                msg: FlutterI18n.translate(
-                  context,
-                  "setting.clear_and_restart_dialog.clear",
-                ),
-              );
-              restartApp();
+              Navigator.pop(dialogContext);
+              await _clearCacheAndRestart(context);
             },
-            child: Text(FlutterI18n.translate(context, "confirm")),
+            child: Text(FlutterI18n.translate(dialogContext, "confirm")),
           ),
         ],
       ),
@@ -121,36 +105,128 @@ class SettingCoreCard extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(
-          FlutterI18n.translate(context, "setting.logout_dialog.title"),
+          FlutterI18n.translate(dialogContext, "setting.logout_dialog.title"),
         ),
         content: Text(
-          FlutterI18n.translate(context, "setting.logout_dialog.content"),
+          FlutterI18n.translate(dialogContext, "setting.logout_dialog.content"),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(FlutterI18n.translate(context, "cancel")),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(FlutterI18n.translate(dialogContext, "cancel")),
           ),
           TextButton(
             onPressed: () async {
-              final pd = ProgressDialog(context: context);
-              pd.show(
-                msg: FlutterI18n.translate(
-                  context,
-                  "setting.logout_dialog.logging_out",
-                ),
-              );
-              await clearAllCookies();
-              removeAllFiles();
-              await preference.prefrenceClear();
-              Get.put(ThemeController()).updateTheme();
-              if (!context.mounted) return;
-              if (pd.isOpen()) pd.close();
-              restartApp();
+              Navigator.pop(dialogContext);
+              await _logoutAndRestart(context);
             },
-            child: Text(FlutterI18n.translate(context, "confirm")),
+            child: Text(FlutterI18n.translate(dialogContext, "confirm")),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _clearCacheAndRestart(BuildContext context) async {
+    final pd = ProgressDialog(context: context);
+    late final CookieClearResult cookieResult;
+    pd.show(
+      msg: FlutterI18n.translate(
+        context,
+        "setting.clear_and_restart_dialog.cleaning",
+      ),
+    );
+    try {
+      cookieResult = await clearAllCookies();
+      removeCacheFiles();
+    } finally {
+      if (context.mounted && pd.isOpen()) {
+        pd.close();
+      }
+    }
+    if (!context.mounted) {
+      return;
+    }
+    if (cookieResult.hasFailures) {
+      await _showCookieCleanupDialog(
+        context,
+        contentKey: "setting.clear_and_restart_dialog.cookie_partial",
+        details: cookieResult.summary(),
+      );
+      if (!context.mounted) {
+        return;
+      }
+    } else {
+      showToast(
+        context: context,
+        msg: FlutterI18n.translate(
+          context,
+          "setting.clear_and_restart_dialog.clear",
+        ),
+      );
+    }
+    restartApp();
+  }
+
+  Future<void> _logoutAndRestart(BuildContext context) async {
+    final pd = ProgressDialog(context: context);
+    late final CookieClearResult cookieResult;
+    pd.show(
+      msg: FlutterI18n.translate(context, "setting.logout_dialog.logging_out"),
+    );
+    try {
+      cookieResult = await clearAllCookies();
+      removeAllFiles();
+      await preference.prefrenceClear();
+      Get.put(ThemeController()).updateTheme();
+    } finally {
+      if (context.mounted && pd.isOpen()) {
+        pd.close();
+      }
+    }
+    if (!context.mounted) {
+      return;
+    }
+    if (cookieResult.hasFailures) {
+      await _showCookieCleanupDialog(
+        context,
+        contentKey: "setting.logout_dialog.cookie_partial",
+        details: cookieResult.summary(),
+      );
+      if (!context.mounted) {
+        return;
+      }
+    }
+    restartApp();
+  }
+
+  Future<void> _showCookieCleanupDialog(
+    BuildContext context, {
+    required String contentKey,
+    required String details,
+  }) {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          FlutterI18n.translate(
+            dialogContext,
+            "setting.cookie_cleanup_partial_title",
+          ),
+        ),
+        content: Text(
+          FlutterI18n.translate(
+            dialogContext,
+            contentKey,
+            translationParams: {"details": details},
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(FlutterI18n.translate(dialogContext, "confirm")),
           ),
         ],
       ),

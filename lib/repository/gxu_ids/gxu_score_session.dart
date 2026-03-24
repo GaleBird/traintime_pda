@@ -11,6 +11,10 @@ import 'package:watermeter/repository/preference.dart' as preference;
 import 'package:watermeter/repository/security/secure_file_store.dart';
 
 class GxuScoreSession {
+  static const _scorePagePath = "/cp/templateList/p/up_016_014";
+  static const _portalPagePath = "/view?m=up";
+  static const _scoreWarmUpAttempts = 2;
+  static const _scoreWarmUpRetryDelay = Duration(milliseconds: 250);
   static const scoreListCacheName = "gxu_scores.json";
   static final File file = File("${supportPath.path}/$scoreListCacheName");
   static final SecureFileStore _cacheStore = SecureFileStore(
@@ -80,42 +84,80 @@ class GxuScoreSession {
       username: preference.getString(preference.Preference.idsAccount),
       password: preference.getString(preference.Preference.idsPassword),
     );
-    await _warmUpScoreModule();
+    await _prepareScoreModule();
     final canPreview = await _checkPrintableScoreSheet();
     if (!canPreview) {
       throw const LoginFailedException(msg: "培养评价未完成，研究生成绩单暂时不可查询。");
     }
-    final response = await caSession.dio.post(
+    final response = await _postScoreRequest(
       "${GxuCASession.yjsxtBase}/yjs/py/cjgl/cjdpldy/getCjddyyl",
       data: {"xh": "", "lx": ""},
-      options: _ajaxOptions(),
     );
     final data = _decodeMap(response.data, "成绩单预览");
     return GxuScoreSheet.fromPreviewJson(data);
   }
 
-  Future<void> _warmUpScoreModule() async {
-    final response = await caSession.dio.post(
-      "${GxuCASession.yjsxtBase}/yjs/py/kcpj/loadJxzlpj",
-      data: <String, dynamic>{},
-      options: _ajaxOptions(),
-    );
-    final data = _decodeMap(response.data, "成绩模块初始化");
-    final success =
-        data["success"] == true || data["code"]?.toString() == "200";
-    if (!success) {
-      throw const LoginFailedException(msg: "广西大学成绩模块初始化失败。");
+  Future<void> _prepareScoreModule() async {
+    for (var attempt = 1; attempt <= _scoreWarmUpAttempts; attempt++) {
+      await _openScorePage();
+      final data = await _warmUpScoreModule();
+      if (_isWarmUpSuccess(data)) {
+        return;
+      }
+      if (attempt == _scoreWarmUpAttempts) {
+        throw LoginFailedException(msg: _scoreWarmUpErrorMessage(data));
+      }
+      log.warning(
+        "[GxuScoreSession] Score module warm-up returned unsuccessful payload on attempt $attempt: $data",
+      );
+      await Future<void>.delayed(_scoreWarmUpRetryDelay);
     }
   }
 
+  Future<Map<String, dynamic>> _warmUpScoreModule() async {
+    final response = await _postScoreRequest(
+      "${GxuCASession.yjsxtBase}/yjs/py/kcpj/loadJxzlpj",
+      data: <String, dynamic>{},
+    );
+    return _decodeMap(response.data, "成绩模块初始化");
+  }
+
   Future<bool> _checkPrintableScoreSheet() async {
-    final response = await caSession.dio.post(
+    final response = await _postScoreRequest(
       "${GxuCASession.yjsxtBase}/yjs/py/cjgl/cjdpldy/checkdDycjd",
       data: <String, dynamic>{},
-      options: _ajaxOptions(),
     );
     final result = response.data.toString().replaceAll('"', "").trim();
     return result == "1";
+  }
+
+  bool _isWarmUpSuccess(Map<String, dynamic> data) {
+    return data["success"] == true || data["code"]?.toString() == "200";
+  }
+
+  String _scoreWarmUpErrorMessage(Map<String, dynamic> data) {
+    final remoteMessage = _extractRemoteMessage(data);
+    if (remoteMessage.isEmpty) {
+      return "广西大学成绩模块初始化失败。";
+    }
+    return "广西大学成绩模块初始化失败：$remoteMessage";
+  }
+
+  String _extractRemoteMessage(Map<String, dynamic> data) {
+    for (final key in ["msg", "message", "errorMsg", "error", "reason"]) {
+      final value = data[key]?.toString().trim() ?? "";
+      if (value.isNotEmpty && value != "null") {
+        return value;
+      }
+    }
+    return "";
+  }
+
+  Future<void> _openScorePage() async {
+    await caSession.dio.get(
+      "${GxuCASession.yjsxtBase}$_scorePagePath",
+      options: _pageOptions(),
+    );
   }
 
   Map<String, dynamic> _decodeMap(dynamic data, String scene) {
@@ -134,12 +176,27 @@ class GxuScoreSession {
     throw LoginFailedException(msg: "广西大学$scene接口返回异常。");
   }
 
+  Future<Response<dynamic>> _postScoreRequest(
+    String path, {
+    required Map<String, dynamic> data,
+  }) {
+    return caSession.dio.post(path, data: data, options: _ajaxOptions());
+  }
+
+  Options _pageOptions() {
+    return Options(
+      headers: {
+        HttpHeaders.refererHeader: "${GxuCASession.yjsxtBase}$_portalPagePath",
+      },
+    );
+  }
+
   Options _ajaxOptions() {
     return Options(
       headers: {
         "X-Requested-With": "XMLHttpRequest",
         "Origin": "https://yjsxt.gxu.edu.cn",
-        "Referer": "${GxuCASession.yjsxtBase}/cp/templateList/p/up_016_014",
+        "Referer": "${GxuCASession.yjsxtBase}$_scorePagePath",
       },
     );
   }

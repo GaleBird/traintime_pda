@@ -493,11 +493,15 @@ school_net:
     notice: 廣西大學網絡查詢走獨立的校園網自助系統，驗證碼識別失敗時會要求手動輸入。
     cached_notice: 這裡默認顯示上次成功查詢的緩存數據，不會在打開頁面時自動重新登錄。
     manual_refresh_hint: 需要最新數據時再手動刷新；如果服務端要求驗證碼，會彈出輸入框。
-    cache_hint_compact: "預設顯示緩存；需要最新點刷新（可能需驗證碼）。"
     http_warning: 注意：校園網自助系統使用 HTTP 明文傳輸，查詢密碼可能被竊聽。建議僅在可信網絡環境使用，並定期修改密碼。
+    open_portal: 打開官網
+    portal_open_failed: 打開校園網官網失敗
     overview: 賬戶概覽
     traffic: 流量信息
     account: 賬號
+    account_short: 賬號
+    portal_short: 官網
+    cache_info_hint: 目前顯示的是緩存信息，需要最新數據時再手動刷新；如果服務端要求驗證碼，會彈出輸入框。
     settlement: 下次結算
     used: 已用流量
     free: 免費流量
@@ -781,11 +785,14 @@ setting:
     content: 確定清除緩存後重啟程序？
     cleaning: 正在清理緩存
     clear: 緩存已被清除
+    cookie_partial: 緩存文件已清理，但以下登錄會話未能完全清除：{details}\n點擊確定後繼續重啟應用。
   logout: 退出登錄並重啟應用
   logout_dialog:
     title: 確認對話框
     content: 確定退出登錄？你的所有數據將會被徹底刪除！
     logging_out: 正在退出登錄
+    cookie_partial: 本地數據已清理，但以下登錄會話未能完全清除：{details}\n點擊確定後繼續重啟應用。
+  cookie_cleanup_partial_title: 部分登錄會話未清理
   need_close_dialog:
     title: 請關閉應用
     content: 因為技術限制，用戶需要自行關閉窗口，然後重新打開應用。

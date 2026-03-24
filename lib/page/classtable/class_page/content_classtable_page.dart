@@ -28,8 +28,6 @@ class ContentClassTablePage extends StatefulWidget {
 
 class _ContentClassTablePageState extends State<ContentClassTablePage> {
   static const EdgeInsets _topRowPadding = EdgeInsets.only(top: 2, bottom: 4);
-  static const double _selectedWeekHighlightAlpha = 0.3;
-  static const double _unselectedWeekHighlightAlpha = 0.0;
   static const BorderRadius _weekChoiceBorderRadius = BorderRadius.all(
     Radius.circular(12.0),
   );
@@ -172,8 +170,8 @@ class _ContentClassTablePageState extends State<ContentClassTablePage> {
                 alpha: classTableWeekHighlightAlpha(
                   page: page,
                   index: index,
-                  selectedAlpha: _selectedWeekHighlightAlpha,
-                  unselectedAlpha: _unselectedWeekHighlightAlpha,
+                  selectedAlpha: currentWeekHighlightAlpha,
+                  unselectedAlpha: currentWeekUnselectedHighlightAlpha,
                 ),
               ),
               elevation: 0.0,

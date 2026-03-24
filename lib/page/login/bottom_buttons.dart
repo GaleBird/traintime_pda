@@ -10,7 +10,6 @@ import 'package:watermeter/repository/logger.dart';
 import 'package:watermeter/repository/network_session.dart';
 
 class ButtomButtons extends StatelessWidget {
-  /// Variables of the three buttons in the bottom
   final Color _bottomTextColor = const Color.fromRGBO(35, 62, 99, 0.5);
   TextStyle get _bottomTextStyle =>
       TextStyle(color: _bottomTextColor, fontWeight: FontWeight.w700);
