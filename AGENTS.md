@@ -86,8 +86,8 @@ Build examples:
 - GXU homepage schoolnet card now summarizes used traffic in `GB` and shows relative cache age; the GXU detail page should keep showing cached data plus refresh-status hints even if a later refresh fails.
 - GXU network detail refresh must release `gxuNetworkRefreshing` even on early exits such as missing query password or missing account, otherwise the refresh button stays disabled until app restart after the user fixes the input.
 - GXU dashboard parsing is label-based around `下次结算 / 已用流量 / 免费流量 / 可用流量 / 消费保护 / 账户余额`; if those labels disappear, surface an explicit page-structure error instead of silently faking data.
-- GXU 校园网详情页底部不再显示原来的注意提示卡或独立官网说明卡；操作区固定为单行三按钮（刷新 / 账号 / 官网），按钮采用“图标在上、文字在下”的紧凑布局以兼容小屏和大字体，按钮下方补充一行“当前为缓存信息、需手动刷新”的说明，并用系统浏览器跳转到 `http://self.gxu.edu.cn` 查看尚未接入的功能。
-- GXU 校园网详情页的 `Scaffold` 现关闭页面级键盘避让：底部“刷新 / 账号 / 官网”固定操作区不再跟随键盘整体上移；账号密码输入继续在 `SchoolNetPasswordDialog` 内处理键盘与滚动。
+- GXU 校园网详情页不再显示原来的注意提示卡或独立官网说明卡；操作区保持单行三按钮（刷新 / 账号 / 官网），按钮为“图标在左、文字在右”的横向样式，并紧贴在流量信息卡下方排布，其中“刷新”为蓝底白字主按钮，“账号 / 官网”保持白底；按钮下方使用浅橙色提示条承载更自然的缓存提示文案（如“默认显示缓存数据；需要最新结果时再点刷新，如需验证会提示输入验证码。”），并用系统浏览器跳转到 `http://self.gxu.edu.cn` 查看尚未接入的功能。注意 `ReloadWidget` 内含 `Expanded`，无缓存错误态不能直接放进滚动视图，需用有界高度（例如 `Column + Expanded`）承载。
+- GXU 校园网详情页的 `Scaffold` 现关闭页面级键盘避让；账号密码输入继续在 `SchoolNetPasswordDialog` 内处理键盘与滚动。
 - GXU 校园网详情页的底部操作区在无缓存、首次进入、首次刷新失败、缺少账号/密码等空状态下也必须继续显示；不要再把 `刷新 / 账号 / 官网` 入口只挂在“已有缓存内容”的分支里。
 - GXU 校园网无缓存空态卡片应保持纯说明用途，不要再在卡片内部重复放一个“刷新”按钮；空态正文需要可滚动，避免固定底部操作区出现后在短屏/分屏/大字号下把说明卡挤出或裁掉。
 - 设置页执行“清除缓存并重启”或“退出登录”时，除删除 `GxuNetworkUsage.json` 外，还要同步重置 `gxuNetworkInfo / gxuNetworkStatus / gxuNetworkRefreshing / gxuNetworkError`，避免重启前后或非重启路径短暂显示旧校园网缓存状态。
@@ -137,6 +137,7 @@ Build examples:
 - For iterative Android UI debugging on the connected phone, prefer a persistent `flutter run` session from the real ASCII repo path so Dart-only changes can use hot reload/hot restart instead of reinstalling the APK every time.
 - `codex resume` filters sessions by `session_meta.payload.cwd`; after any repo path rename, historical session `.jsonl` files under `C:\Users\彭于晏\.codex\sessions\` may need their stored path prefix updated from the old repo path to the new one, otherwise they will only appear with `codex resume --all`.
 - 设置/关于页的 fork 信息（维护者/仓库/上游）统一维护在 `lib/repository/fork_info.dart`；改品牌或仓库地址优先改这里。
+- 当前维护仓库 GitHub owner 已切换为 `GaleBird`；本地 `origin`、README、官网源码展示和应用内仓库链接都应保持 `https://github.com/GaleBird/traintime_pda`，不要再写回旧的 `2484895358/traintime_pda`。
 - App 检查更新现在读取 DigitalOcean Spaces 清单 `https://myapk.sgp1.cdn.digitaloceanspaces.com/manifests/update.json`，实现位于 `lib/repository/pda_service_session.dart`；不要再接回旧的 `legacy.superbart.top/traintime_pda_backend` 或 GitHub `latest release` 直读接口。
 - 更新清单现在必须通过 `RSA-SHA256` 签名校验后才会被接受：公钥和 key id 固定在 `lib/repository/fork_info.dart`，校验逻辑在 `lib/repository/security/update_manifest_security.dart`，下载链接也会限制为受信任的 `https` host。若清单缺签名、签名不匹配或下载地址越界，应用内检查更新必须显式失败，不能静默降级。
 - 更新版本比较现在同时比较 `pubspec.yaml` 的语义版本和 `+build`；发布 tag 应与 `pubspec.yaml` 版本完全一致，格式优先使用 `v1.0.1+41` 这类带 build 号的 tag，否则应用内更新提示可能无法正确判断新旧版本。
@@ -163,6 +164,8 @@ Build examples:
 - 当前 launcher/splash 图标源图已切到 `assets/Gemini_Generated_Image_2dp0k82dp0k82dp0.png`，并通过 `tool/generators/generate_gxu_launcher_icon.py --source assets/Gemini_Generated_Image_2dp0k82dp0k82dp0.png` 生成 `assets/gxu.png`；后续若重跑图标生成流程，默认以该源图为基准。
 - 设计上下文已写入仓库根目录 `.impeccable.md`，后续界面/品牌类改动遵循“校园自然系：西大绿 + 米白 + 金色点缀”。
 - `PigPage` 仍是首页底部导航的正式入口；不要再移除“猪图鉴赏”，除非用户明确要求。
+- 登录页里的两个外链入口（软件官网 `https://gxu.app` 与研究生教务系统官网 `https://yjsxt.gxu.edu.cn/tp`）现在应压缩进登录卡片底部现有的次级按钮区，与“清除缓存 / 查看网络交互”共用同一个紧凑 `Wrap`；不要再额外新增整行或页面底部独立悬浮层，以免在矮屏、分屏和键盘场景挤掉登录按钮或产生跳变。
+- GXU 通知提醒设置页不再显示“物理实验提醒”开关，且 `CourseReminderService` 在 GXU 模式下不得继续安排实验提醒。
 - GXU 字标统一走 `lib/page/public_widget/gxu_wordmark.dart`，不要在页面里直接裸用 `SvgPicture.asset('assets/gxu_name.svg')`。当前默认资源已切到透明底 PNG `assets/new_name_wordmark.png`（由 `assets/new_name.png` 派生），因为旧 SVG 字标在真机上存在字形缺损；该组件继续负责暗色主题浅色着色。
 - GXU 选课情况页的学期筛选改为显式下拉框，入口文案要让用户直接看出“这里可以选学期”；选课概览保持信息优先的卡片式汇总。
 - GXU 选课情况页顶部概览和筛选区保持紧凑，避免“选课概览”和搜索区占据过高首屏；搜索框提示文案用简短表达即可。

@@ -10,7 +10,7 @@
 
 - 当前版本面向：广西大学研究生
 - 当前维护者：KIKO
-- 当前维护仓库：`2484895358/traintime_pda`
+- 当前维护仓库：`GaleBird/traintime_pda`
 - 上游项目：Traintime PDA / XDYou
 - 上游仓库：`BenderBlog/traintime_pda`
 
