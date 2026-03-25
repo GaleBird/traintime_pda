@@ -68,9 +68,14 @@ class CourseReminderService extends NotificationService
   int get daysToSchedule =>
       preference.getInt(preference.Preference.courseReminderDaysToSchedule);
 
-  bool get enableExperimentNotifications => preference.getBool(
-    preference.Preference.courseReminderEnableExperimentNotifications,
-  );
+  bool get supportsExperimentNotifications =>
+      !preference.getBool(preference.Preference.isGxuMode);
+
+  bool get enableExperimentNotifications =>
+      preference.getBool(
+        preference.Preference.courseReminderEnableExperimentNotifications,
+      ) &&
+      supportsExperimentNotifications;
 
   String get lastLocale =>
       preference.getString(preference.Preference.notificationLastLocale);
@@ -133,13 +138,14 @@ class CourseReminderService extends NotificationService
   }
 
   Future<void> setEnableExperimentNotifications(bool value) async {
+    final nextValue = supportsExperimentNotifications && value;
     await preference.setBool(
       preference.Preference.courseReminderEnableExperimentNotifications,
-      value,
+      nextValue,
     );
     if (isEnabled) {
       log.info(
-        '[CourseReminderService] Experiment notifications ${value ? "enabled" : "disabled"}, updating notifications',
+        '[CourseReminderService] Experiment notifications ${nextValue ? "enabled" : "disabled"}, updating notifications',
       );
       await validateAndUpdateNotifications();
     }

@@ -34,15 +34,12 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   int _daysToSchedule = 7;
   bool _isLoading = true;
   int _pendingCount = 0;
-  bool _enableExperimentNotifications = false;
 
   @override
   void initState() {
     super.initState();
     // Load settings from service
     _isEnabled = _courseReminder.isEnabled;
-    _enableExperimentNotifications =
-        _courseReminder.enableExperimentNotifications;
     _minutesBefore = _courseReminder.minutesBefore;
     _daysToSchedule = _courseReminder.daysToSchedule;
 
@@ -534,48 +531,6 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             remaining: const [],
             bottomRow: Column(
               children: [
-                ListTile(
-                  title: Text(
-                    FlutterI18n.translate(
-                      context,
-                      'setting.notification_page.experiment_reminder',
-                    ),
-                  ),
-                  subtitle: Text(
-                    FlutterI18n.translate(
-                      context,
-                      'setting.notification_page.experiment_reminder_hint',
-                    ),
-                  ),
-                  trailing: Switch(
-                    value: _enableExperimentNotifications,
-                    onChanged: (value) async {
-                      setState(() {
-                        _enableExperimentNotifications = value;
-                        _isLoading = true;
-                      });
-
-                      try {
-                        // Use service setter - it will automatically update notifications if enabled
-                        await _courseReminder.setEnableExperimentNotifications(
-                          value,
-                        );
-
-                        // Update pending count and notify if enabled
-                        if (_isEnabled) {
-                          await _updatePendingCountAndNotify();
-                        }
-                      } finally {
-                        if (mounted) {
-                          setState(() {
-                            _isLoading = false;
-                          });
-                        }
-                      }
-                    },
-                  ),
-                ),
-                const Divider(),
                 ListTile(
                   title: Text(
                     FlutterI18n.translate(
