@@ -135,8 +135,6 @@ class GxuEmptyClassroomFilterPanel extends StatelessWidget {
             ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: 14),
-          _ViewTypeSelector(form: form, state: state),
-          const SizedBox(height: 12),
           _FullWidthSelectTile(
             field: form.selectField("xqdm"),
             state: state,
@@ -168,6 +166,8 @@ class GxuEmptyClassroomFilterPanel extends StatelessWidget {
           _TimeRangePanel(form: form, state: state),
           const SizedBox(height: 12),
           _AdvancedCard(form: form, state: state),
+          const SizedBox(height: 12),
+          _ViewTypeSelector(form: form, state: state),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
