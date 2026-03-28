@@ -13,16 +13,19 @@ class GxuEmptyClassroomPage extends StatefulWidget {
 
 class _GxuEmptyClassroomPageState extends State<GxuEmptyClassroomPage> {
   late final TextEditingController _searchController;
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -34,32 +37,48 @@ class _GxuEmptyClassroomPageState extends State<GxuEmptyClassroomPage> {
       return const SizedBox.shrink();
     }
     _syncSearchController(state.searchKeyword);
-    final content = Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 860),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          children: [
-            GxuEmptyClassroomFilterPanel(form: form, state: state),
-            if (state.result != null) ...[
-              const SizedBox(height: 12),
-              GxuEmptyClassroomOverviewPanel(state: state, form: form),
+    return RefreshIndicator(
+      onRefresh: () => _handleRefresh(state),
+      notificationPredicate: (notification) =>
+          state.result != null &&
+          defaultScrollNotificationPredicate(notification),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: CustomScrollView(
+            key: const PageStorageKey<String>('gxu_empty_classroom_page_list'),
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                sliver: SliverToBoxAdapter(
+                  child: GxuEmptyClassroomFilterPanel(form: form, state: state),
+                ),
+              ),
+              if (state.result != null)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  sliver: SliverToBoxAdapter(
+                    child: GxuEmptyClassroomOverviewPanel(
+                      state: state,
+                      form: form,
+                    ),
+                  ),
+                ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                sliver: GxuEmptyClassroomResultSliver(
+                  state: state,
+                  searchController: _searchController,
+                ),
+              ),
             ],
-            const SizedBox(height: 12),
-            GxuEmptyClassroomResultSection(
-              state: state,
-              searchController: _searchController,
-            ),
-          ],
+          ),
         ),
       ),
     );
-    if (state.result == null) {
-      return content;
-    }
-    return RefreshIndicator(onRefresh: state.refreshResults, child: content);
   }
 
   void _syncSearchController(String value) {
@@ -70,5 +89,12 @@ class _GxuEmptyClassroomPageState extends State<GxuEmptyClassroomPage> {
       text: value,
       selection: TextSelection.collapsed(offset: value.length),
     );
+  }
+
+  Future<void> _handleRefresh(GxuEmptyClassroomState state) async {
+    if (state.result == null) {
+      return;
+    }
+    await state.refreshResults();
   }
 }

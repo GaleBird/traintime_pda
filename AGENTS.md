@@ -79,6 +79,9 @@ Build examples:
 - `ToolBoxPage` should keep the GXU `网络查询` entry first with the Wi-Fi icon. Remaining GXU-unadapted toolbox items should be shown as `（未完成）` placeholders that open the in-app unfinished page instead of any XDU website. The old XDU `网络查询`, `移动门户`, `物理计算`, and `睿思导航` toolbox entries are removed.
 - GXU 工具箱现已接入原生 `空闲教室` 查询入口，位于 `网络查询` 之后。该功能必须继续复用 `GxuCASession` 的研究生系统登录态，通过 `GxuEmptyClassroomSession` 直接访问研究生系统 `cxkxjsIndex/js?item_id=up_033_006_003` 页面和其 AJAX 接口（`findAllJsxx / findJszyqk / getJszyqkByJsxxid`），不要退回外部浏览器或 WebView。
 - GXU 空闲教室查询页是移动优先的原生筛选页：筛选项基于研究生系统真实字段（学期、起止周次、起止星期、起止节次、教学楼、教室、座位数、占用情况、占用类型），窄屏纵向排布、宽屏双列排布；“查看方式”属于查询条件本身，放在筛选区顶部，不要再塞回结果区；进入页面时只加载筛选表单，不要自动立刻发起空教室查询，未查询前结果区应明确提示用户先选条件再点查询；时间范围区应保持 6 个紧凑选择项（开始/结束周次、开始/结束星期、开始/结束节次）的两列排布，优先压缩首屏高度；筛选项选择走原生底部面板，本地搜索只过滤已加载结果、不触发远端请求；结果列表默认只先渲染前 40 间教室并通过“继续加载”逐批展开，避免一次性渲染研究生系统返回的上千间教室导致卡顿或闪退；最近一次 GXU 空教室筛选条件保存在 `Preference.gxuEmptyClassroomQuery`，教学楼选择继续同步到旧的 `emptyClassroomLastChoice` 兼容键。
+- GXU 空闲教室结果必须始终与当前筛选条件一一对应：任一远端查询条件（含查看方式、周次/星期/节次、楼栋、教室、座位/占用筛选）变化后，要立刻作废旧结果、旧详情缓存和本地结果搜索词，并阻止旧请求回填；刷新失败时宁可只显示错误，也不能继续保留上一次空教室结果误导用户；若 `Preference.gxuEmptyClassroomQuery` 本地 JSON 损坏，应记录 warning、清掉坏偏好并回退到服务端默认表单，而不是让页面初始化直接报错。
+- GXU 空闲教室筛选项判等必须按“trim 后去空字符串”的同一口径比较新旧值；依赖同步的单选字段（如教学楼）在表单态里可能保存为 `['']`，而选项面板会回传 `[]`，这种语义等价的“空选择”不能触发结果作废、本地搜索清空或旧请求失效。
+- GXU 空闲教室页的主滚动容器必须保持稳定：不要再因为 `result == null / != null` 切换而替换掉整棵 `ListView` 外层，筛选条件变化后应尽量保留当前滚动位置，尤其是修改周次/星期/节次这类筛选项时不能再把页面强行跳回顶部；下拉刷新在“已有结果”时才允许触发远端刷新。
 - GXU 空闲教室查询的页面结构异常必须显式报错（如缺少 `.cxkxjs .toolbar`、必需筛选项、教室目录列表或占用结果 `data` 列表），不要为“跑起来”静默伪造空结果；解析回归优先补 `test/gxu_empty_classroom_parser_test.dart`。
 - `ToolBoxPage` 的 `网络查询` 必须走原生 `NetworkCardWindow`，不要再用 WebView 打开 `self.gxu.edu.cn` 的 HTTP 页面，避免在 WebView 里暴露明文链路登录流程。
 - GXU homepage bottom navigation keeps four tabs in order: 首页 / 工具箱 / 猪图鉴赏 / 设置. `PigPage` remains a real page backed by `pighub.top`; do not remove the pig tab again unless the user explicitly asks to drop it.

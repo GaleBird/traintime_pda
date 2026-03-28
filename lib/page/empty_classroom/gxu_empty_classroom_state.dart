@@ -78,24 +78,18 @@ class GxuEmptyClassroomState extends ChangeNotifier {
     }
     final validationError = _validateQueryForm(currentForm);
     if (validationError != null) {
-      resultState = SessionState.error;
-      resultError = validationError;
+      _showResultError(validationError);
       notifyListeners();
       return;
     }
-    final requestId = ++_resultRequestId;
-    resultState = SessionState.fetching;
-    resultError = null;
+    final requestId = _beginResultRefresh();
     notifyListeners();
     try {
-      result = await session.search(currentForm);
+      final nextResult = await session.search(currentForm);
       if (_disposed || requestId != _resultRequestId) {
         return;
       }
-      _detailCache.clear();
-      _rebuildRows(resetVisibleCount: true);
-      resultState = SessionState.fetched;
-      _persistForm(currentForm);
+      _applyFetchedResult(nextResult, currentForm);
     } catch (error, stackTrace) {
       if (_disposed || requestId != _resultRequestId) {
         return;
@@ -105,8 +99,7 @@ class GxuEmptyClassroomState extends ChangeNotifier {
         error,
         stackTrace,
       );
-      resultState = SessionState.error;
-      resultError = error.toString();
+      _showResultError(error.toString());
     }
     notifyListeners();
   }
@@ -132,7 +125,15 @@ class GxuEmptyClassroomState extends ChangeNotifier {
     if (currentForm == null) {
       return;
     }
-    form = currentForm.updateSelect(name, values);
+    final normalizedValues = _normalizeSelectValues(values);
+    final currentValues = _normalizeSelectValues(
+      currentForm.selectField(name)?.selectedValues ?? const [],
+    );
+    if (listEquals(currentValues, normalizedValues)) {
+      return;
+    }
+    form = currentForm.updateSelect(name, normalizedValues);
+    _invalidateResultForQueryChange();
     _persistForm(form!);
     notifyListeners();
   }
@@ -142,7 +143,11 @@ class GxuEmptyClassroomState extends ChangeNotifier {
     if (currentForm == null) {
       return;
     }
+    if (currentForm.textField(name)?.value == value) {
+      return;
+    }
     form = currentForm.updateText(name, value);
+    _invalidateResultForQueryChange();
     _persistForm(form!);
     notifyListeners();
   }
@@ -152,22 +157,10 @@ class GxuEmptyClassroomState extends ChangeNotifier {
     if (currentForm == null || currentForm.viewType == value) {
       return;
     }
-    final hadResult = result != null;
     form = currentForm.updateViewType(value);
-    if (hadResult) {
-      // Result payload shape may depend on view type; clear stale rows to avoid
-      // marking unknown slots as "空闲".
-      result = null;
-      resultState = SessionState.none;
-      resultError = null;
-      _detailCache.clear();
-    }
-    _rebuildRows(resetVisibleCount: true);
+    _invalidateResultForQueryChange();
     _persistForm(form!);
     notifyListeners();
-    if (hadResult) {
-      unawaited(refreshResults());
-    }
   }
 
   set searchKeyword(String value) {
@@ -198,7 +191,7 @@ class GxuEmptyClassroomState extends ChangeNotifier {
     return _filteredRows.fold(0, (sum, row) => sum + row.availableCount);
   }
 
-  bool get canRefresh => form != null && pageState == SessionState.fetched;
+  bool get canRefresh => result != null && pageState == SessionState.fetched;
 
   void loadMoreRows() {
     if (!hasMoreRows) {
@@ -214,9 +207,23 @@ class GxuEmptyClassroomState extends ChangeNotifier {
   GxuEmptyClassroomQueryForm _restoreQueryForm(
     GxuEmptyClassroomQueryForm value,
   ) {
-    final restored = value.restoreFromPreference(
-      preference.getString(preference.Preference.gxuEmptyClassroomQuery),
+    final rawPreference = preference.getString(
+      preference.Preference.gxuEmptyClassroomQuery,
     );
+    GxuEmptyClassroomQueryForm restored;
+    try {
+      restored = value.restoreFromPreference(rawPreference);
+    } on FormatException catch (error, stackTrace) {
+      log.warning(
+        "[GxuEmptyClassroomState] Corrupted empty classroom query preference detected.",
+        error,
+        stackTrace,
+      );
+      unawaited(
+        preference.remove(preference.Preference.gxuEmptyClassroomQuery),
+      );
+      restored = value;
+    }
     final buildingChoice = preference.getString(
       preference.Preference.emptyClassroomLastChoice,
     );
@@ -251,6 +258,53 @@ class GxuEmptyClassroomState extends ChangeNotifier {
         return;
       }
     }
+  }
+
+  List<String> _normalizeSelectValues(List<String> values) {
+    return values
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  void _invalidateResultForQueryChange() {
+    _resultRequestId++;
+    result = null;
+    resultError = null;
+    resultState = SessionState.none;
+    _detailCache.clear();
+    _searchKeyword = "";
+    _rebuildRows(resetVisibleCount: true);
+  }
+
+  int _beginResultRefresh() {
+    final requestId = ++_resultRequestId;
+    result = null;
+    resultError = null;
+    resultState = SessionState.fetching;
+    _detailCache.clear();
+    _rebuildRows(resetVisibleCount: true);
+    return requestId;
+  }
+
+  void _applyFetchedResult(
+    GxuEmptyClassroomResult nextResult,
+    GxuEmptyClassroomQueryForm currentForm,
+  ) {
+    result = nextResult;
+    resultError = null;
+    resultState = SessionState.fetched;
+    _detailCache.clear();
+    _rebuildRows(resetVisibleCount: true);
+    _persistForm(currentForm);
+  }
+
+  void _showResultError(String message) {
+    result = null;
+    resultState = SessionState.error;
+    resultError = message;
+    _detailCache.clear();
+    _rebuildRows(resetVisibleCount: true);
   }
 
   void _rebuildRows({required bool resetVisibleCount}) {
