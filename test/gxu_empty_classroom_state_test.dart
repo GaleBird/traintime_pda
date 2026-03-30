@@ -81,6 +81,33 @@ void main() {
       },
     );
 
+    test(
+      'does not invalidate result for reordered multi select values',
+      () async {
+        final state = GxuEmptyClassroomState(
+          session: _FakeEmptyClassroomSession(
+            form: _buildForm().updateSelect('jsxxid', [
+              'room-a101',
+              'room-b201',
+            ]),
+            onSearch: (_) async => _buildResult(),
+          ),
+        );
+
+        await state.initialize();
+        await state.refreshResults();
+        state.searchKeyword = 'A101';
+
+        state.updateSelect('jsxxid', ['room-b201', 'room-a101']);
+
+        expect(state.result, isNotNull);
+        expect(state.resultState, network_session.SessionState.fetched);
+        expect(state.searchKeyword, 'A101');
+        expect(state.filteredRows, isNotEmpty);
+        expect(state.canRefresh, isTrue);
+      },
+    );
+
     test('ignores in-flight result after query condition changes', () async {
       final completer = Completer<GxuEmptyClassroomResult>();
       final state = GxuEmptyClassroomState(
@@ -129,6 +156,27 @@ void main() {
       expect(state.resultState, network_session.SessionState.error);
       expect(state.resultError, contains('refresh boom'));
       expect(state.canRefresh, isFalse);
+    });
+
+    test('rejects invalid seat range before querying', () async {
+      var searched = false;
+      final state = GxuEmptyClassroomState(
+        session: _FakeEmptyClassroomSession(
+          form: _buildForm().updateText('zws', '80').updateText('jszws', '60'),
+          onSearch: (_) async {
+            searched = true;
+            return _buildResult();
+          },
+        ),
+      );
+
+      await state.initialize();
+      await state.refreshResults();
+
+      expect(searched, isFalse);
+      expect(state.result, isNull);
+      expect(state.resultState, network_session.SessionState.error);
+      expect(state.resultError, contains('座位数范围'));
     });
 
     test(

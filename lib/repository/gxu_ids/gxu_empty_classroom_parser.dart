@@ -4,6 +4,8 @@ import 'package:watermeter/model/gxu_ids/gxu_empty_classroom.dart';
 import 'package:watermeter/repository/auth_exceptions.dart';
 
 class GxuEmptyClassroomParser {
+  static const _emptyDetailPlaceholders = {"0", "0.0"};
+
   GxuEmptyClassroomQueryForm parseQueryPage(String html) {
     final document = parse(html);
     final toolbar = document.querySelector(".cxkxjs .toolbar");
@@ -12,6 +14,7 @@ class GxuEmptyClassroomParser {
     }
     final fields = _parseToolbarFields(toolbar);
     _ensureRequiredSelect(fields.selectFields);
+    _ensureQueryRangeSelectOptions(fields.selectFields);
     return GxuEmptyClassroomQueryForm(
       viewType: GxuEmptyClassroomViewType.period,
       selectFields: fields.selectFields,
@@ -154,6 +157,33 @@ class GxuEmptyClassroomParser {
     }
   }
 
+  void _ensureQueryRangeSelectOptions(
+    List<GxuEmptyClassroomSelectField> fields,
+  ) {
+    const rangeSelectNames = [
+      "xqdm",
+      "kszc",
+      "jszc",
+      "ksxq",
+      "jsxq",
+      "ksjc",
+      "jsjc",
+    ];
+    final fieldByName = {for (final field in fields) field.name: field};
+    for (final name in rangeSelectNames) {
+      final field = fieldByName[name];
+      if (field == null) {
+        throw LoginFailedException(msg: "广西大学空教室页缺少筛选项：$name。");
+      }
+      final hasUsableOption = field.options.any(
+        (option) => option.value.trim().isNotEmpty,
+      );
+      if (!hasUsableOption) {
+        throw LoginFailedException(msg: "广西大学空教室页筛选项缺少可用选项：$name。");
+      }
+    }
+  }
+
   List<Map<String, dynamic>> _extractDataList(
     dynamic payload, {
     required String scene,
@@ -178,7 +208,7 @@ class GxuEmptyClassroomParser {
 
   void _appendLine(List<String> lines, String label, dynamic value) {
     final text = _normalizeText(value?.toString() ?? "");
-    if (text.isEmpty) {
+    if (text.isEmpty || _emptyDetailPlaceholders.contains(text)) {
       return;
     }
     lines.add("$label：$text");

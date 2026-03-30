@@ -696,7 +696,7 @@ class GxuEmptyClassroomRemoteRoom {
       statusCode: _stringOf(json["jsztdm"]),
       availableSeats: _seatTextOf(json["yxzws"]),
       examSeats: _seatTextOf(json["kszws"]),
-      undergraduateUnavailable: json["bkszbky"] == true,
+      undergraduateUnavailable: _boolOf(json["bkszbky"]),
       schedule: _stringMapOf(json["jk"]),
       exam: _stringMapOf(json["ks"]),
       borrow: _stringMapOf(json["jy"]),
@@ -1046,6 +1046,17 @@ String _seatTextOf(dynamic value) {
     return raw.substring(0, raw.length - 2);
   }
   return raw;
+}
+
+bool _boolOf(dynamic value) {
+  if (value is bool) {
+    return value;
+  }
+  if (value is num) {
+    return value == 1;
+  }
+  final text = _stringOf(value).toLowerCase();
+  return text == "1" || text == "true";
 }
 
 String _stringOf(dynamic value) {

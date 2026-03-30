@@ -281,10 +281,13 @@ class GxuEmptyClassroomState extends ChangeNotifier {
   }
 
   List<String> _normalizeSelectValues(List<String> values) {
-    return values
+    final normalized = values
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
+        .toSet()
         .toList(growable: false);
+    normalized.sort();
+    return normalized;
   }
 
   void _invalidateResultForQueryChange() {
@@ -377,12 +380,16 @@ class GxuEmptyClassroomState extends ChangeNotifier {
     if (weekdayError != null) {
       return weekdayError;
     }
-    return _validateIntRange(
+    final periodError = _validateIntRange(
       form,
       startName: "ksjc",
       endName: "jsjc",
       label: "节次",
     );
+    if (periodError != null) {
+      return periodError;
+    }
+    return _validateSeatRange(form);
   }
 
   String? _validateIntRange(
@@ -400,6 +407,24 @@ class GxuEmptyClassroomState extends ChangeNotifier {
     }
     if (start > end) {
       return "$label范围选择不合法：开始值不能大于结束值。";
+    }
+    return null;
+  }
+
+  String? _validateSeatRange(GxuEmptyClassroomQueryForm form) {
+    final minText = form.textField("zws")?.value.trim() ?? "";
+    final maxText = form.textField("jszws")?.value.trim() ?? "";
+    if (minText.isEmpty && maxText.isEmpty) {
+      return null;
+    }
+    final minValue = minText.isEmpty ? null : int.tryParse(minText);
+    final maxValue = maxText.isEmpty ? null : int.tryParse(maxText);
+    if ((minText.isNotEmpty && minValue == null) ||
+        (maxText.isNotEmpty && maxValue == null)) {
+      return "座位数必须为数字，请重新输入。";
+    }
+    if (minValue != null && maxValue != null && minValue > maxValue) {
+      return "座位数范围选择不合法：最少座位不能大于最多座位。";
     }
     return null;
   }

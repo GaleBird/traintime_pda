@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:watermeter/model/gxu_ids/gxu_empty_classroom.dart';
+import 'package:watermeter/repository/auth_exceptions.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_empty_classroom_parser.dart';
 
 void main() {
@@ -81,6 +82,41 @@ void main() {
       expect(form.selectField("jsxxid")?.isMulti, isTrue);
       expect(form.textField("zws")?.label, "座位数");
       expect(form.textField("jszws")?.label, "座位数");
+    });
+
+    test("parseQueryPage throws when range selects have no usable options", () {
+      const html = '''
+      <html>
+        <body>
+          <div class="cxkxjs">
+            <div class="toolbar">
+              <div class="form-group"><select name="xqdm"><option value="">请选择</option></select></div>
+              <div class="form-group"><select name="kszc"><option value="1" selected>第1周</option></select></div>
+              <div class="form-group"><select name="jszc"><option value="20" selected>第20周</option></select></div>
+              <div class="form-group"><select name="ksxq"><option value="1" selected>星期一</option></select></div>
+              <div class="form-group"><select name="jsxq"><option value="7" selected>星期日</option></select></div>
+              <div class="form-group"><select name="ksjc"><option value="1" selected>第1节</option></select></div>
+              <div class="form-group"><select name="jsjc"><option value="13" selected>第13节</option></select></div>
+              <div class="form-group"><select name="jxlh"></select></div>
+              <div class="form-group"><select name="jsxxid" multiple></select></div>
+              <div class="form-group"><select name="zyqk" multiple><option value="">请选择</option></select></div>
+              <div class="form-group"><select name="zylx"><option value="">请选择</option></select></div>
+            </div>
+          </div>
+        </body>
+      </html>
+      ''';
+      expect(
+        () => parser.parseQueryPage(html),
+        throwsA(
+          predicate(
+            (err) =>
+                err is LoginFailedException &&
+                err.msg.contains("可用选项") &&
+                err.msg.contains("xqdm"),
+          ),
+        ),
+      );
     });
 
     test("withClassroomCatalog fills building and classroom options", () {
@@ -263,6 +299,28 @@ void main() {
       expect(rows.last.cells.first.localDetailMessage, "本科设置为不可用教室");
     });
 
+    test("remote room treats numeric/string bkszbky as unavailable", () {
+      final numeric = GxuEmptyClassroomRemoteRoom.fromJson({
+        "jsxxid": "15-201",
+        "jsmc": "15-201",
+        "jsztdm": "1",
+        "yxzws": 0,
+        "kszws": 0,
+        "bkszbky": 1,
+      });
+      final stringValue = GxuEmptyClassroomRemoteRoom.fromJson({
+        "jsxxid": "15-202",
+        "jsmc": "15-202",
+        "jsztdm": "1",
+        "yxzws": 0,
+        "kszws": 0,
+        "bkszbky": "1",
+      });
+
+      expect(numeric.undergraduateUnavailable, isTrue);
+      expect(stringValue.undergraduateUnavailable, isTrue);
+    });
+
     test("parseDetailPayload joins all returned detail lines", () {
       final detail = parser.parseDetailPayload({
         "data": {"jk": "研究生场地冲突", "ks": "", "jy": "预约场地冲突", "tk": "", "qt": ""},
@@ -270,6 +328,14 @@ void main() {
 
       expect(detail, contains("排课信息：研究生场地冲突"));
       expect(detail, contains("借用信息：预约场地冲突"));
+    });
+
+    test("parseDetailPayload ignores placeholder 0 and 0.0 values", () {
+      final detail = parser.parseDetailPayload({
+        "data": {"jk": "0", "ks": 0, "jy": "0.0", "tk": 0.0, "qt": ""},
+      });
+
+      expect(detail, "未查询到占用详情");
     });
   });
 }
