@@ -107,6 +107,8 @@ Build examples:
 - GXU classtable now uses a segmented block layout with `午休/晚休` separators; `晚休` maps to periods 9-10, and the evening section shows periods 11-13 after it.
 - GXU classtable does not use vertical scrolling; the left period column shows start time on top and end time at bottom for each period.
 - GXU classtable left period column adds subtle row dividers, with start time emphasized and end time deemphasized to improve boundary readability.
+- 手动“添加课程信息”页的节次数量必须根据 `lib/model/time_list.dart` 的 `timeList` 动态计算（GXU 为 13 节，旧 XDU 为 11 节），不要再把起止节次滚轮写死为 11 项。
+- 设置页 `SettingWindow -> SettingClasstableCard` 必须提供“清除所有用户添加课程”入口：仅清除 `UserClass.json` 并刷新课表（不影响学校课表），并调用 `updateCurrentData()` 同步主页当前/下一节展示。
 - GXU 日程表在小窗/矮屏下也必须无溢出：顶部周次条、日期行、左侧节次列会按可用高度切换到紧凑尺寸；节次时间与 `午休/晚休` 标签要可缩放适配，不能再出现 split-screen 下的 `RenderFlex overflow`。
 - GXU 课表卡片在超窄列宽下要强制进入紧凑布局：隐藏老师行、压缩地点最小字号与内边距，优先保证课程名和上课地点可读。
 - GXU 课表卡片里的 `AutoSizeText` 最小字号必须和步进粒度保持整倍数关系；当前课程名/地点统一使用 `0.5` 的步进粒度，避免真机小窗下触发 `MinFontSize must be a multiple of stepGranularity` 断言。

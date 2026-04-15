@@ -117,6 +117,14 @@ class _SettingClasstableCardState extends State<SettingClasstableCard> {
                   if (mounted) setState(() {});
                 }),
           ),
+          const Divider(),
+          ListTile(
+            title: Text(
+              FlutterI18n.translate(context, "setting.clear_user_class"),
+            ),
+            trailing: const Icon(Icons.navigate_next),
+            onTap: () => _showClearUserDefinedClassDialog(context),
+          ),
         ],
       ),
     ).padding(bottom: 16);
@@ -190,6 +198,56 @@ class _SettingClasstableCardState extends State<SettingClasstableCard> {
               Navigator.pop(context);
             },
             child: Text(FlutterI18n.translate(context, "confirm")),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showClearUserDefinedClassDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          FlutterI18n.translate(
+            dialogContext,
+            "setting.clear_user_class_title",
+          ),
+        ),
+        content: Text(
+          FlutterI18n.translate(
+            dialogContext,
+            "setting.clear_user_class_content",
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(FlutterI18n.translate(dialogContext, "cancel")),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final file = File(
+                "${supportPath.path}/${ClasstableStorage.userDefinedClassName}",
+              );
+              if (file.existsSync()) {
+                file.deleteSync();
+              }
+              await Get.put(
+                ClassTableController(),
+              ).updateClassTable(isUserDefinedChanged: true);
+              updateCurrentData();
+              if (!context.mounted) return;
+              showToast(
+                context: context,
+                msg: FlutterI18n.translate(
+                  context,
+                  "setting.clear_user_class_clear",
+                ),
+              );
+            },
+            child: Text(FlutterI18n.translate(dialogContext, "confirm")),
           ),
         ],
       ),

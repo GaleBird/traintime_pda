@@ -14,6 +14,8 @@ const weekButtonWidth = 74.0;
 /// The horizontal padding of the button.
 const weekButtonHorizontalPadding = 2.0;
 
+int get classPeriodCount => timeList.length ~/ 2;
+
 /// The width ratio for the week column.
 const double leftRow = 26;
 

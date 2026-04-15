@@ -33,16 +33,47 @@ class _TimeSelectorState extends State<TimeSelector> {
   late int start;
   late int stop;
 
+  int get _periodCount => classPeriodCount;
+
   @override
   void initState() {
     super.initState();
     week = widget.initialWeek;
-    start = widget.initialStart;
-    stop = widget.initialStop;
+    start = _clampPeriod(widget.initialStart);
+    stop = _clampPeriod(widget.initialStop);
+    if (stop < start) {
+      stop = start;
+    }
   }
 
   void _notifyChange() {
     widget.onChanged((week, start, stop));
+  }
+
+  int _clampPeriod(int value) {
+    if (value < 1) return 1;
+    if (value > _periodCount) return _periodCount;
+    return value;
+  }
+
+  void _updateStart(int nextStart) {
+    setState(() {
+      start = _clampPeriod(nextStart);
+      if (stop < start) {
+        stop = start;
+      }
+    });
+    _notifyChange();
+  }
+
+  void _updateStop(int nextStop) {
+    setState(() {
+      stop = _clampPeriod(nextStop);
+      if (start > stop) {
+        start = stop;
+      }
+    });
+    _notifyChange();
   }
 
   @override
@@ -111,13 +142,10 @@ class _TimeSelectorState extends State<TimeSelector> {
                       ),
                     ).flexible(),
                     WheelChoose(
-                      changeBookIdCallBack: (choiceStart) {
-                        setState(() => start = choiceStart);
-                        _notifyChange();
-                      },
+                      changeBookIdCallBack: _updateStart,
                       defaultPage: start - 1,
                       options: List.generate(
-                        11,
+                        _periodCount,
                         (index) => WheelChooseOptions(
                           data: index + 1,
                           hint: FlutterI18n.translate(
@@ -131,13 +159,10 @@ class _TimeSelectorState extends State<TimeSelector> {
                       ),
                     ).flexible(),
                     WheelChoose(
-                      changeBookIdCallBack: (choiceStop) {
-                        setState(() => stop = choiceStop);
-                        _notifyChange();
-                      },
+                      changeBookIdCallBack: _updateStop,
                       defaultPage: stop - 1,
                       options: List.generate(
-                        11,
+                        _periodCount,
                         (index) => WheelChooseOptions(
                           data: index + 1,
                           hint: FlutterI18n.translate(
