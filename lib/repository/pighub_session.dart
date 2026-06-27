@@ -10,12 +10,12 @@ import 'dart:isolate';
 import 'package:dio/dio.dart';
 
 const _base = "https://www.pighub.top";
+const _latestImagesPath = "/api/images?sort=2";
+const _connectTimeout = Duration(seconds: 10);
+const _receiveTimeout = Duration(seconds: 30);
 
 Dio get _dio => Dio(
-  BaseOptions(
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 30),
-  ),
+  BaseOptions(connectTimeout: _connectTimeout, receiveTimeout: _receiveTimeout),
 );
 
 final math.Random _random = math.Random();
@@ -23,7 +23,7 @@ List<PigHubImage>? _cachedImages;
 
 class PigHubImage {
   final String id;
-  final String thumbnail; // relative path, e.g. /data/xxx.jpg
+  final String thumbnail; // relative path, e.g. /images/xxx.jpg
   final String title;
   final String imageType; // "static" or "gif"
 
@@ -34,35 +34,42 @@ class PigHubImage {
     required this.imageType,
   });
 
-  factory PigHubImage.fromJson(Map<String, dynamic> json) => PigHubImage(
-    id: json["id"].toString(),
-    thumbnail: json["thumbnail"].toString(),
-    title: json["title"].toString(),
-    imageType: json["image_type"].toString(),
-  );
+  factory PigHubImage.fromJson(Map<String, dynamic> json) {
+    final filename = _readRequiredField(json, "filename");
+    return PigHubImage(
+      id: _readRequiredField(json, "id"),
+      thumbnail: _readRequiredField(json, "image_url"),
+      title: _readRequiredField(json, "title"),
+      imageType: _detectImageType(filename),
+    );
+  }
 
   /// Full URL of the image.
   String get url => "$_base$thumbnail";
 }
 
 List<dynamic> _extractImageList(dynamic data) {
-  final dynamic payload = (data is Map<String, dynamic> && data["data"] != null)
-      ? data["data"]
-      : data;
-
-  final dynamic imagesRaw = switch (payload) {
-    Map<String, dynamic>() => payload["images"] ?? payload,
-    List<dynamic>() => payload,
-    _ => null,
-  };
-
-  if (imagesRaw is List<dynamic>) {
-    return imagesRaw;
-  }
-  if (imagesRaw is Map<String, dynamic>) {
-    return imagesRaw.values.toList();
+  if (data is Map<String, dynamic> && data["data"] is List<dynamic>) {
+    return data["data"] as List<dynamic>;
   }
   throw const FormatException("Invalid PigHub response format.");
+}
+
+String _detectImageType(String filename) {
+  return filename.toLowerCase().endsWith(".gif") ? "gif" : "static";
+}
+
+String _readRequiredField(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  if (value == null) {
+    throw FormatException("Missing PigHub image field: $key");
+  }
+
+  final text = value.toString();
+  if (text.trim().isEmpty) {
+    throw FormatException("Empty PigHub image field: $key");
+  }
+  return text;
 }
 
 List<PigHubImage> _parsePigImages(dynamic data) {
@@ -86,7 +93,7 @@ Future<List<PigHubImage>> _getAllPigs({bool forceRefresh = false}) async {
     return _cachedImages!;
   }
 
-  final response = await _dio.get("$_base/api/all-images");
+  final response = await _dio.get("$_base$_latestImagesPath");
 
   // Parse in a background isolate to avoid UI jank on large payloads.
   final parsed = await Isolate.run(() => _parsePigImages(response.data));

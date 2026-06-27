@@ -3,6 +3,7 @@ import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:provider/provider.dart';
 import 'package:watermeter/page/public_widget/context_extension.dart';
 import 'package:watermeter/page/public_widget/empty_list_view.dart';
+import 'package:watermeter/page/score/gxu_score_evaluation_widgets.dart';
 import 'package:watermeter/page/score/gxu_score_state.dart';
 import 'package:watermeter/page/score/score_statics.dart';
 import 'package:watermeter/page/score/gxu_score_widgets.dart';
@@ -47,6 +48,17 @@ class _GxuScorePageState extends State<GxuScorePage> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 children: [
                   GxuScoreArchiveCard(profile: sheet.profile),
+                  const SizedBox(height: 16),
+                  GxuCourseEvaluationEntryCard(
+                    onOpenOfficial: () => openGxuOfficialEvaluation(context),
+                    onAutoEvaluate: () => state.autoEvaluateAndRefresh(context),
+                  ),
+                  if (state.autoEvaluationFeedback != null) ...[
+                    const SizedBox(height: 12),
+                    GxuAutoEvaluationFeedbackBanner(
+                      message: state.autoEvaluationFeedback!,
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   TextField(
                     controller: _searchController,

@@ -4,6 +4,7 @@ import 'package:watermeter/page/public_widget/toast.dart';
 import 'package:watermeter/page/score/score_statics.dart';
 import 'package:watermeter/model/gxu_ids/gxu_course_selection.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_course_selection_session.dart';
+import 'package:watermeter/repository/gxu_ids/gxu_service_error_message.dart';
 import 'package:watermeter/repository/logger.dart';
 
 enum GxuCourseCategoryFilter { all, degree, nonDegree }
@@ -56,6 +57,7 @@ class GxuCourseSelectionState extends ChangeNotifier {
   ScoreFetchState state = ScoreFetchState.fetching;
   GxuCourseSelectionSheet? sheet;
   String? error;
+  String? errorTitle;
   String _search = "";
   String _selectedSemesterCode = "";
   GxuCourseCategoryFilter _categoryFilter = GxuCourseCategoryFilter.all;
@@ -83,6 +85,7 @@ class GxuCourseSelectionState extends ChangeNotifier {
   }) async {
     state = ScoreFetchState.fetching;
     error = null;
+    errorTitle = null;
     sheet = null;
     _search = "";
     _selectedSemesterCode = "";
@@ -100,7 +103,9 @@ class GxuCourseSelectionState extends ChangeNotifier {
         s,
       );
       state = ScoreFetchState.error;
-      error = e.toString();
+      final message = describeGxuServiceError(e);
+      errorTitle = message.title;
+      error = message.description;
     } finally {
       if (context.mounted &&
           GxuCourseSelectionSession.isCourseSelectionCacheUsed) {

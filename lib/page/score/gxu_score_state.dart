@@ -2,15 +2,57 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:watermeter/model/gxu_ids/gxu_score.dart';
 import 'package:watermeter/page/public_widget/toast.dart';
+import 'package:watermeter/page/score/gxu_auto_evaluation_result_dialog.dart';
 import 'package:watermeter/page/score/score_statics.dart';
+import 'package:watermeter/repository/gxu_ids/gxu_course_evaluation_session.dart';
 import 'package:watermeter/repository/gxu_ids/gxu_score_session.dart';
+import 'package:watermeter/repository/gxu_ids/gxu_service_error_message.dart';
 import 'package:watermeter/repository/logger.dart';
+
+String describeGxuAutoEvaluationFeedback(
+  GxuCourseEvaluationReport report, {
+  String? refreshNote,
+}) {
+  final submitted = report.submittedCourseCount;
+  final skipped = report.skippedCourseCount;
+  final suffix = refreshNote ?? '';
+  if (submitted > 0 && skipped > 0) {
+    return '已完成 $submitted 门课程评价，$skipped 门课程无需重复提交，成绩已刷新。$suffix';
+  }
+  if (submitted > 0) {
+    return '已完成 $submitted 门课程评价，成绩已刷新。$suffix';
+  }
+  if (skipped > 0) {
+    return '未发现新的可提交评教，$skipped 门课程无需重复提交，成绩已刷新。$suffix';
+  }
+  return '已确认课程评价全部完成，本次没有提交新评价，成绩已刷新。$suffix';
+}
+
+String describeGxuAutoEvaluationProgress(GxuCourseEvaluationReport report) {
+  final submitted = report.submittedCourseCount;
+  final skipped = report.skippedCourseCount;
+  if (submitted > 0 && skipped > 0) {
+    return '已提交 $submitted 门课程评价，$skipped 门无需重复提交，正在刷新成绩。';
+  }
+  if (submitted > 0) {
+    return '已提交 $submitted 门课程评价，正在刷新成绩。';
+  }
+  if (skipped > 0) {
+    return '$skipped 门课程无需重复提交，正在刷新成绩。';
+  }
+  return '已确认课程评价全部完成，正在刷新成绩。';
+}
 
 class GxuScoreState extends ChangeNotifier {
   bool _disposed = false;
   ScoreFetchState state = ScoreFetchState.fetching;
   GxuScoreSheet? sheet;
   String? error;
+  String? errorTitle;
+  bool isEvaluationRequired = false;
+  bool isAutoEvaluating = false;
+  String? autoEvaluationProgress;
+  String? autoEvaluationFeedback;
   String _search = "";
   String _selectedSemesterCode = "";
   bool _isSelectMode = false;
@@ -39,6 +81,11 @@ class GxuScoreState extends ChangeNotifier {
   }) async {
     state = ScoreFetchState.fetching;
     error = null;
+    errorTitle = null;
+    isEvaluationRequired = false;
+    isAutoEvaluating = false;
+    autoEvaluationProgress = null;
+    autoEvaluationFeedback = null;
     sheet = null;
     _search = "";
     _selectedSemesterCode = "";
@@ -52,7 +99,10 @@ class GxuScoreState extends ChangeNotifier {
     } catch (e, s) {
       log.error("[GxuScoreState] Error on fetching score info.", e, s);
       state = ScoreFetchState.error;
-      error = e.toString();
+      final message = describeGxuServiceError(e);
+      errorTitle = message.title;
+      error = message.description;
+      isEvaluationRequired = e is GxuScoreEvaluationRequiredException;
     } finally {
       if (context.mounted && GxuScoreSession.isScoreListCacheUsed) {
         showToast(
@@ -60,6 +110,52 @@ class GxuScoreState extends ChangeNotifier {
           msg: FlutterI18n.translate(context, "score.cache_message"),
         );
       }
+      notifyListeners();
+    }
+  }
+
+  Future<void> autoEvaluateAndRefresh(BuildContext context) async {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    state = ScoreFetchState.fetching;
+    error = null;
+    errorTitle = null;
+    isEvaluationRequired = false;
+    isAutoEvaluating = true;
+    autoEvaluationProgress = '正在检查课程评价状态，不会重复提交已完成课程。';
+    autoEvaluationFeedback = null;
+    sheet = null;
+    notifyListeners();
+    try {
+      final result = await GxuScoreSession().autoEvaluateAndFetchScoreSheet(
+        onEvaluationReport: (report) {
+          autoEvaluationProgress = describeGxuAutoEvaluationProgress(report);
+          notifyListeners();
+        },
+      );
+      sheet = result.sheet;
+      _initSelectionState();
+      state = ScoreFetchState.ok;
+      autoEvaluationFeedback = describeGxuAutoEvaluationFeedback(
+        result.report,
+        refreshNote: result.refreshNote,
+      );
+      isAutoEvaluating = false;
+      notifyListeners();
+      if (navigator.mounted) {
+        await showGxuAutoEvaluationResultDialog(
+          navigator.context,
+          message: autoEvaluationFeedback!,
+        );
+      }
+    } catch (e, s) {
+      log.error("[GxuScoreState] Error on auto evaluating scores.", e, s);
+      state = ScoreFetchState.error;
+      final message = describeGxuServiceError(e);
+      errorTitle = message.title;
+      error = message.description;
+      isEvaluationRequired = e is GxuScoreEvaluationRequiredException;
+    } finally {
+      isAutoEvaluating = false;
       notifyListeners();
     }
   }

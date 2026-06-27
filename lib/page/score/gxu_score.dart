@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:provider/provider.dart';
 import 'package:watermeter/page/public_widget/public_widget.dart';
+import 'package:watermeter/page/score/gxu_score_evaluation_widgets.dart';
 import 'package:watermeter/page/score/gxu_score_page.dart';
 import 'package:watermeter/page/score/gxu_score_state.dart';
 import 'package:watermeter/page/score/score_statics.dart';
@@ -35,12 +36,25 @@ class GxuScoreWindow extends StatelessWidget {
                   case ScoreFetchState.ok:
                     return const GxuScorePage();
                   case ScoreFetchState.error:
+                    if (state.isEvaluationRequired) {
+                      return GxuScoreEvaluationRequiredView(
+                        error: state.error,
+                        onOpenOfficial: () =>
+                            openGxuOfficialEvaluation(context),
+                        onAutoEvaluate: () =>
+                            state.autoEvaluateAndRefresh(context),
+                      );
+                    }
                     return ReloadWidget(
+                      title: state.errorTitle,
                       errorStatus: state.error,
                       function: () => state.refreshingState(context),
                     );
                   case ScoreFetchState.fetching:
-                    return const Center(child: CircularProgressIndicator());
+                    return GxuScoreFetchingView(
+                      isAutoEvaluating: state.isAutoEvaluating,
+                      autoEvaluationStatus: state.autoEvaluationProgress,
+                    );
                 }
               },
             ),

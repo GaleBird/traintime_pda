@@ -36,6 +36,7 @@ class GxuCourseSelectionWindow extends StatelessWidget {
                     return const GxuCourseSelectionPage();
                   case ScoreFetchState.error:
                     return ReloadWidget(
+                      title: state.errorTitle,
                       errorStatus: state.error,
                       function: () => state.refreshingState(context),
                     );

@@ -144,24 +144,28 @@ class ReloadWidget extends StatelessWidget {
   final Object? errorStatus;
   final StackTrace? stackTrace;
   final String? buttonName;
+  final String? title;
   const ReloadWidget({
     super.key,
     required this.function,
     this.buttonName,
     this.errorStatus,
     this.stackTrace,
+    this.title,
   });
 
   @override
   Widget build(BuildContext context) {
+    final displayTitle =
+        title ?? FlutterI18n.translate(context, "error_detected");
     return [
           [
                 Text(
-                  FlutterI18n.translate(context, "error_detected"),
+                  displayTitle,
                   style: const TextStyle(fontSize: 16),
                 ).center().padding(bottom: 8),
                 if (errorStatus != null)
-                  Text("Description: $errorStatus").padding(bottom: 8),
+                  Text(errorStatus.toString()).padding(bottom: 8),
                 if (stackTrace != null)
                   Text("Stacktrace: \n$stackTrace", textAlign: TextAlign.left),
               ]
