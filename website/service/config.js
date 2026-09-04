@@ -3,9 +3,9 @@ const path = require("node:path");
 const DEFAULT_PORT = 9080;
 const REQUEST_TIMEOUT_MS = 12000;
 const DEFAULT_MANIFEST_URL =
-  "https://myapk.sgp1.cdn.digitaloceanspaces.com/manifests/update.json";
+  "https://dl.gxu.app/manifests/update.json";
 const DEFAULT_ALLOWED_DOWNLOAD_HOSTS = [
-  "myapk.sgp1.cdn.digitaloceanspaces.com",
+  "dl.gxu.app",
   "github.com",
 ];
 const DEFAULT_ALLOWED_RELEASE_HOSTS = ["github.com"];

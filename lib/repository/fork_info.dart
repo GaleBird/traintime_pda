@@ -10,10 +10,9 @@ class ForkInfo {
   static const String officialWebsiteUrl = 'https://gxu.app';
   static const String graduateSystemUrl = 'https://yjsxt.gxu.edu.cn/tp';
   static const String updateManifestUrl =
-      'https://myapk.sgp1.cdn.digitaloceanspaces.com/manifests/update.json';
+      'https://dl.gxu.app/manifests/update.json';
   static const String updateManifestKeyId = 'update-manifest-rsa-sha256-v1';
-  static const String updateManifestSpacesHost =
-      'myapk.sgp1.cdn.digitaloceanspaces.com';
+  static const String updateManifestDownloadHost = 'dl.gxu.app';
   static const String updateManifestPublicKey = '''
 -----BEGIN PUBLIC KEY-----
 MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA5OcXMxRWWf2D9CcokrG2
@@ -32,11 +31,11 @@ zfShDDUTGNPWNAGOvcukLS30gRvJOR9amZANgUSa+aBNAgMBAAE=
     'apps.apple.com',
   };
   static const Set<String> trustedUpdateDownloadHosts = {
-    updateManifestSpacesHost,
+    updateManifestDownloadHost,
     'github.com',
     'apps.apple.com',
   };
-  static const String trustedSpacesReleasePathPrefix = '/releases/';
+  static const String trustedDownloadReleasePathPrefix = '/releases/';
 
   static const String repositoryUrl =
       'https://github.com/$repositoryOwner/$repositoryName';

@@ -127,23 +127,21 @@ jobs:
             fs.writeFileSync('release_body.txt', release.data.body ?? '', 'utf8');
             core.setOutput('html_url', release.data.html_url);
 
-      - name: Validate Spaces Settings
+      - name: Validate R2 Settings
         shell: bash
         env:
-          DO_SPACES_BUCKET: ${{ secrets.DO_SPACES_BUCKET }}
-          DO_SPACES_REGION: ${{ secrets.DO_SPACES_REGION }}
-          DO_SPACES_CDN_BASE_URL: ${{ secrets.DO_SPACES_CDN_BASE_URL }}
-          DO_SPACES_KEY: ${{ secrets.DO_SPACES_KEY }}
-          DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_TOKEN_ID: ${{ secrets.R2_TOKEN_ID }}
+          R2_TOKEN_VALUE: ${{ secrets.R2_TOKEN_VALUE }}
+          R2_CDN_BASE_URL: ${{ secrets.R2_CDN_BASE_URL }}
           UPDATE_MANIFEST_SIGNING_KEY: ${{ secrets.UPDATE_MANIFEST_SIGNING_KEY }}
         run: |
           set -euo pipefail
           for key in \
-            DO_SPACES_BUCKET \
-            DO_SPACES_REGION \
-            DO_SPACES_CDN_BASE_URL \
-            DO_SPACES_KEY \
-            DO_SPACES_SECRET \
+            R2_ACCOUNT_ID \
+            R2_TOKEN_ID \
+            R2_TOKEN_VALUE \
+            R2_CDN_BASE_URL \
             UPDATE_MANIFEST_SIGNING_KEY; do
             if [ -z "${!key}" ]; then
               echo "::error::Missing required GitHub secret: ${key}"
@@ -155,7 +153,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m pip install --user awscli cryptography
+          python3 -m pip install --user cryptography
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Prepare Update Manifest Signing Key
@@ -173,13 +171,13 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.tag_name }}
           RELEASE_URL: ${{ steps.release_metadata.outputs.html_url }}
-          DO_SPACES_CDN_BASE_URL: ${{ secrets.DO_SPACES_CDN_BASE_URL }}
+          R2_CDN_BASE_URL: ${{ secrets.R2_CDN_BASE_URL }}
         run: |
           set -euo pipefail
           python3 tool/generators/generate_update_manifest.py \
             --tag "${RELEASE_TAG}" \
             --release-url "${RELEASE_URL}" \
-            --cdn-base-url "${DO_SPACES_CDN_BASE_URL}" \
+            --cdn-base-url "${R2_CDN_BASE_URL}" \
             --body-file release_body.txt \
             --output update.json \
             --signing-key "${{ env.UPDATE_MANIFEST_SIGNING_KEY_PATH }}" \
@@ -188,33 +186,33 @@ jobs:
             --asset-path build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
             --asset-path build/app/outputs/flutter-apk/app-x86_64-release.apk
 
-      - name: Upload APK and Manifest to Spaces
+      - name: Upload APK and Manifest to R2
         shell: bash
         env:
           RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.tag_name }}
-          DO_SPACES_BUCKET: ${{ secrets.DO_SPACES_BUCKET }}
-          DO_SPACES_REGION: ${{ secrets.DO_SPACES_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.DO_SPACES_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.DO_SPACES_SECRET }}
-          AWS_REGION: ${{ secrets.DO_SPACES_REGION }}
-          AWS_DEFAULT_REGION: ${{ secrets.DO_SPACES_REGION }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_TOKEN_ID: ${{ secrets.R2_TOKEN_ID }}
+          R2_TOKEN_VALUE: ${{ secrets.R2_TOKEN_VALUE }}
         run: |
           set -euo pipefail
-          ENDPOINT="https://${DO_SPACES_REGION}.digitaloceanspaces.com"
           RELEASE_DIR="releases/${RELEASE_TAG}"
 
           for apk in build/app/outputs/flutter-apk/*.apk; do
-            aws --endpoint-url "${ENDPOINT}" s3 cp \
-              "${apk}" \
-              "s3://${DO_SPACES_BUCKET}/${RELEASE_DIR}/$(basename "${apk}")" \
-              --acl public-read \
-              --cache-control "public, max-age=31536000, immutable" \
-              --content-type "application/vnd.android.package-archive"
+            python3 tool/generators/r2_upload.py \
+              --account-id "${R2_ACCOUNT_ID}" \
+              --token-id "${R2_TOKEN_ID}" \
+              --token-value "${R2_TOKEN_VALUE}" \
+              --key "${RELEASE_DIR}/$(basename "${apk}")" \
+              --file "${apk}" \
+              --content-type "application/vnd.android.package-archive" \
+              --cache-control "public, max-age=31536000, immutable"
           done
 
-          aws --endpoint-url "${ENDPOINT}" s3 cp \
-            update.json \
-            "s3://${DO_SPACES_BUCKET}/${{ env.UPDATE_MANIFEST_PATH }}" \
-            --acl public-read \
-            --cache-control "no-store, max-age=0" \
-            --content-type "application/json"
+          python3 tool/generators/r2_upload.py \
+            --account-id "${R2_ACCOUNT_ID}" \
+            --token-id "${R2_TOKEN_ID}" \
+            --token-value "${R2_TOKEN_VALUE}" \
+            --key "${{ env.UPDATE_MANIFEST_PATH }}" \
+            --file update.json \
+            --content-type "application/json" \
+            --cache-control "no-store, max-age=0"

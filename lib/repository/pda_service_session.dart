@@ -291,8 +291,8 @@ String _validatedAndroidDownloadUrl(String rawUrl) {
       allowedHosts: ForkInfo.trustedUpdateDownloadHosts,
     ),
   );
-  if (uri.host == ForkInfo.updateManifestSpacesHost &&
-      !uri.path.startsWith(ForkInfo.trustedSpacesReleasePathPrefix)) {
+  if (uri.host == ForkInfo.updateManifestDownloadHost &&
+      !uri.path.startsWith(ForkInfo.trustedDownloadReleasePathPrefix)) {
     throw FormatException('Unexpected Spaces download path: ${uri.path}');
   }
   return uri.toString();

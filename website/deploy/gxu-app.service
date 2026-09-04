@@ -8,7 +8,7 @@ User=azureuser
 WorkingDirectory=/home/azureuser/gxuapp/site/service
 EnvironmentFile=-/etc/gxu-app.env
 Environment=PORT=9080
-Environment=UPDATE_MANIFEST_URL=https://myapk.sgp1.cdn.digitaloceanspaces.com/manifests/update.json
+Environment=UPDATE_MANIFEST_URL=https://dl.gxu.app/manifests/update.json
 Environment=STATS_FILE=/home/azureuser/gxuapp/site/data/download-counts.json
 ExecStart=/usr/bin/node /home/azureuser/gxuapp/site/service/server.js
 Restart=always
