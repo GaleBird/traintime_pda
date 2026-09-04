@@ -32,6 +32,25 @@ subprojects {
                 }
             }
         }
+
+        // Force consistent JVM target across plugin subprojects
+        // (home_widget 0.8.1 ships JVM 11 bytecode that cannot inline into 1.8,
+        // and mixing Kotlin 17 with Java 1.8 fails target validation).
+        if (project.plugins.hasPlugin("org.jetbrains.kotlin.android")) {
+            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions {
+                    jvmTarget = "17"
+                }
+            }
+            if (project.extensions.findByName("android") != null) {
+                project.android {
+                    compileOptions {
+                        sourceCompatibility JavaVersion.VERSION_17
+                        targetCompatibility JavaVersion.VERSION_17
+                    }
+                }
+            }
+        }
     }
     
     project.buildDir = "${rootProject.buildDir}/${project.name}"
