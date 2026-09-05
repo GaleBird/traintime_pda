@@ -11,6 +11,12 @@ class ForkInfo {
   static const String graduateSystemUrl = 'https://yjsxt.gxu.edu.cn/tp';
   static const String updateManifestUrl =
       'https://dl.gxu.app/manifests/update.json';
+  // 回退源：主源（R2 直链）不可用时，经官网 VPS 中转拉取 manifest。
+  // 官网侧 UPDATE_MANIFEST_URL 是环境变量，可随时在 VPS 上改指向新存储，
+  // 存量用户无需发版即可恢复检查更新。
+  static const List<String> updateManifestFallbackUrls = [
+    'https://gxu.app/api/manifest',
+  ];
   static const String updateManifestKeyId = 'update-manifest-rsa-sha256-v1';
   static const String updateManifestDownloadHost = 'dl.gxu.app';
   static const String updateManifestPublicKey = '''

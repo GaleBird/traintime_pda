@@ -32,7 +32,7 @@ Future<UpdateCheckResult> checkUpdate() {
   return updateLock.synchronized(() async {
     _startUpdateCheck();
     try {
-      final response = await dio.get(ForkInfo.updateManifestUrl);
+      final response = await _fetchManifestWithFallback();
       final message = await _buildUpdateMessage(response.data);
       updateMessage.value = message;
       updateError.value = null;
@@ -66,6 +66,30 @@ void _startUpdateCheck() {
   updateResult.value = null;
   updateError.value = null;
   updateState.value = true;
+}
+
+/// 依次尝试主源与回退源拉取 manifest。
+///
+/// 任一源返回 404 视为"没有发布"（noRelease），直接抛出；
+/// 网络错误则继续尝试下一个源，全部失败时抛出最后一个错误。
+Future<dynamic> _fetchManifestWithFallback() async {
+  final urls = [
+    ForkInfo.updateManifestUrl,
+    ...ForkInfo.updateManifestFallbackUrls,
+  ];
+  Object? lastError;
+  for (final url in urls) {
+    try {
+      return await dio.get(url);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == HttpStatus.notFound) {
+        rethrow;
+      }
+      log.warning('[update] manifest source unreachable: $url', e);
+      lastError = e;
+    }
+  }
+  throw lastError!;
 }
 
 Future<UpdateMessage> _buildUpdateMessage(dynamic rawData) async {
